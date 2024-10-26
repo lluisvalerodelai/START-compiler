@@ -1,0 +1,6 @@
+int main(){
+  return(2);
+  float foo;
+  foo = 0.001;
+  string hello_world = "hello world!";
+}
