@@ -1,3 +1,7 @@
+// TODO
+//  -redo token type system,
+//  -Token -> type, string value (convert numerics to ints in parsing)
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -15,20 +19,17 @@ typedef enum {
 } token_type;
 
 typedef enum {
-  CHAR,
-  CHAR_P,
-  INT,
-  FLOAT,
+  obrace,
+  cbrace,
+  oparen,
+  cparen,
+  sc,
+  eq,
 } value_id;
 
 typedef struct {
-  value_id value_id;
-  void *value_p;
-} token_value;
-
-typedef struct {
   token_type type;
-  token_value value;
+  value_id value;
 } Token_tuple;
 
 typedef struct {
@@ -41,27 +42,29 @@ void init_dArray(dTokenArray *dAp, int initial_size) {
   dAp->dA_len = initial_size;
   dAp->array = malloc((10 + initial_size) * sizeof(Token_tuple));
   dAp->len_used = 0;
-  printf("dArray init");
 }
 
 void insert_dArray(dTokenArray *dAp, Token_tuple token) {
-  printf("starting insertdArray");
   if (dAp->len_used == dAp->dA_len) {
     dAp->dA_len = dAp->dA_len * 2;
     dAp->array = realloc(dAp->array, dAp->dA_len * sizeof(Token_tuple));
   }
   dAp->len_used++;
   dAp->array[dAp->len_used] = token;
-  printf("succesfully added to darray");
 }
 
 void free_dArray(dTokenArray *dAp) {
-  printf("freeing darray");
   free(dAp->array);
   dAp->len_used = 0;
   dAp->dA_len = 0;
   dAp = NULL;
-  printf("done freeing darray");
+}
+
+void print_dArray(dTokenArray *dAp) {
+  for (int i = 0; i < dAp->len_used + 1; i++) {
+    Token_tuple token = dAp->array[i];
+    printf("%i \t %u \n", i, token.value);
+  }
 }
 
 char peek_next_char(FILE *file) {
@@ -86,11 +89,6 @@ dTokenArray lexer(FILE *fptr) {
   dTokenArray TOKENS;
   init_dArray(&TOKENS, 100);
 
-  char test_token_value[10] = "hello worl";
-  token_value test_token_type = {.value_id = CHAR_P,
-                                 .value_p = test_token_value};
-  Token_tuple test_token_tuple = {.type = identifier, .value = test_token_type};
-
   char c;
   bool are_checking_string = false;
 
@@ -113,17 +111,23 @@ dTokenArray lexer(FILE *fptr) {
       }
     }
     if (c == '{') {
-      printf("Found Token: { \n");
+      Token_tuple token = {.value = obrace, .type = separator};
+      insert_dArray(&TOKENS, token);
     } else if (c == '}') {
-      printf("Found Token: } \n");
+      Token_tuple token = {.value = cbrace, .type = separator};
+      insert_dArray(&TOKENS, token);
     } else if (c == '(') {
-      printf("Found Token: ( \n");
+      Token_tuple token = {.value = oparen, .type = separator};
+      insert_dArray(&TOKENS, token);
     } else if (c == ')') {
-      printf("Found Token: ) \n");
+      Token_tuple token = {.value = cparen, .type = separator};
+      insert_dArray(&TOKENS, token);
     } else if (c == ';') {
-      printf("Found Token: ; \n");
+      Token_tuple token = {.value = sc, .type = separator};
+      insert_dArray(&TOKENS, token);
     } else if (c == '=') {
-      printf("Found Token: = \n");
+      Token_tuple token = {.value = eq, .type = separator};
+      insert_dArray(&TOKENS, token);
     } else if (c >= '0' && c <= '9') {
       char *buffer = malloc((sizeof(char) * 10) + 1);
       if (buffer == NULL) {
@@ -203,6 +207,8 @@ dTokenArray lexer(FILE *fptr) {
       }
     }
   }
+  printf(" ----TOKEN LIST---- \n");
+  print_dArray(&TOKENS);
   return TOKENS;
 }
 
