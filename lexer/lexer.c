@@ -214,6 +214,10 @@ int main(int argc, char **argv) {
   }
   FILE *fptr = fopen(argv[1], "r");
 
+  if (fptr == NULL) {
+    printf(" \e[31m ERROR \e[0m: File could not be found");
+  }
+
   lexer(fptr);
 
   return 0;

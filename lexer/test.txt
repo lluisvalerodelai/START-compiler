@@ -1,6 +1,11 @@
 int main(){
-  return(2);
-  float foo;
-  foo = 0.001;
-  string hello_world = "hello world!";
+  int c;
+  int a = 2;
+  int b = 3;
+  if (a > b) {
+    c = 0;
+  } else {
+    c = 100;
+  }
+  return 0;
 }
