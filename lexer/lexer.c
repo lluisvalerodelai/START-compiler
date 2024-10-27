@@ -15,57 +15,14 @@ typedef enum {
   operator,
   literal,
   comment,
-  whitespace,
+  string,
+  END,
 } token_type;
-
-typedef enum {
-  obrace,
-  cbrace,
-  oparen,
-  cparen,
-  sc,
-  eq,
-} value_id;
 
 typedef struct {
   token_type type;
-  value_id value;
-} Token_tuple;
-
-typedef struct {
-  Token_tuple *array;
-  int dA_len;
-  int len_used;
-} dTokenArray;
-
-void init_dArray(dTokenArray *dAp, int initial_size) {
-  dAp->dA_len = initial_size;
-  dAp->array = malloc((10 + initial_size) * sizeof(Token_tuple));
-  dAp->len_used = 0;
-}
-
-void insert_dArray(dTokenArray *dAp, Token_tuple token) {
-  if (dAp->len_used == dAp->dA_len) {
-    dAp->dA_len = dAp->dA_len * 2;
-    dAp->array = realloc(dAp->array, dAp->dA_len * sizeof(Token_tuple));
-  }
-  dAp->len_used++;
-  dAp->array[dAp->len_used] = token;
-}
-
-void free_dArray(dTokenArray *dAp) {
-  free(dAp->array);
-  dAp->len_used = 0;
-  dAp->dA_len = 0;
-  dAp = NULL;
-}
-
-void print_dArray(dTokenArray *dAp) {
-  for (int i = 0; i < dAp->len_used + 1; i++) {
-    Token_tuple token = dAp->array[i];
-    printf("%i \t %u \n", i, token.value);
-  }
-}
+  char *value;
+} Token;
 
 char peek_next_char(FILE *file) {
   // Save the current position
@@ -80,19 +37,34 @@ char peek_next_char(FILE *file) {
   return next_char; // Return the character that was peeked
 }
 
-dTokenArray lexer(FILE *fptr) {
+Token *lexer(FILE *fptr) {
 
   if (fptr == NULL) {
     printf("\e[31m ERROR \e[0m: file could not be found \n");
   }
 
-  dTokenArray TOKENS;
-  init_dArray(&TOKENS, 100);
+  Token end_token = {.type = END, .value = "\0"};
+
+  int num_tokens = 0;
+  int tokens_size = 25;
+
+  Token *tokens = malloc(sizeof(Token) * (tokens_size + 1));
+  if (tokens == NULL) {
+    printf("\e[31m ERROR \e[0m: Failed to allocate mem for tokens \n");
+  }
+
+  tokens[tokens_size] = end_token;
 
   char c;
   bool are_checking_string = false;
 
   while (c != EOF) {
+
+    if (num_tokens > tokens_size) {
+      tokens_size = tokens_size + 25;
+      tokens = realloc(tokens, sizeof(Token) * tokens_size);
+    }
+
     c = fgetc(fptr);
     if (!are_checking_string) {
       switch (c) {
@@ -111,23 +83,35 @@ dTokenArray lexer(FILE *fptr) {
       }
     }
     if (c == '{') {
-      Token_tuple token = {.value = obrace, .type = separator};
-      insert_dArray(&TOKENS, token);
+      printf("found separator token \n");
+      Token obrace = {.type = separator, .value = "{"};
+      tokens[num_tokens] = obrace;
+      num_tokens++;
     } else if (c == '}') {
-      Token_tuple token = {.value = cbrace, .type = separator};
-      insert_dArray(&TOKENS, token);
+      printf("found separator token \n");
+      Token cbrace = {.type = separator, .value = "}"};
+      tokens[num_tokens] = cbrace;
+      num_tokens++;
     } else if (c == '(') {
-      Token_tuple token = {.value = oparen, .type = separator};
-      insert_dArray(&TOKENS, token);
+      printf("found separator token \n");
+      Token oparen = {.type = separator, .value = "("};
+      tokens[num_tokens] = oparen;
+      num_tokens++;
     } else if (c == ')') {
-      Token_tuple token = {.value = cparen, .type = separator};
-      insert_dArray(&TOKENS, token);
+      printf("found separator token \n");
+      Token cparen = {.type = separator, .value = ")"};
+      tokens[num_tokens] = cparen;
+      num_tokens++;
     } else if (c == ';') {
-      Token_tuple token = {.value = sc, .type = separator};
-      insert_dArray(&TOKENS, token);
+      printf("found separator token \n");
+      Token sc = {.type = separator, .value = ";"};
+      tokens[num_tokens] = sc;
+      num_tokens++;
     } else if (c == '=') {
-      Token_tuple token = {.value = eq, .type = separator};
-      insert_dArray(&TOKENS, token);
+      printf("found separator token \n");
+      Token ne = {.type = separator, .value = "="};
+      tokens[num_tokens] = ne;
+      num_tokens++;
     } else if (c >= '0' && c <= '9') {
       char *buffer = malloc((sizeof(char) * 10) + 1);
       if (buffer == NULL) {
@@ -155,6 +139,9 @@ dTokenArray lexer(FILE *fptr) {
         }
       }
       printf("Found numeric token: %s \n", buffer);
+      Token numeric = {.type = literal, .value = buffer};
+      tokens[num_tokens] = numeric;
+      num_tokens++;
     } else if (c == '"') {
       are_checking_string = true;
       int i = 1;
@@ -177,6 +164,9 @@ dTokenArray lexer(FILE *fptr) {
       }
       buffer[i] = '"';
       printf("found string token: %s \n", buffer);
+      Token string_token = {.type = string, .value = buffer};
+      tokens[num_tokens] = string_token;
+      num_tokens++;
       are_checking_string = false;
 
     } else {
@@ -195,7 +185,8 @@ dTokenArray lexer(FILE *fptr) {
           break;
         }
       }
-
+      // fix this -> add a keyword token if its a keyword (use enum?) and if its
+      // not then add an identifier
       if (strcmp(buffer, "main") == 0) {
         printf("Found keyword: main \n");
       } else if (strcmp(buffer, "return") == 0) {
@@ -205,11 +196,12 @@ dTokenArray lexer(FILE *fptr) {
       } else {
         printf("Found identifier: %s \n", buffer);
       }
+      Token identifier_token = {.type = identifier, .value = buffer};
+      tokens[num_tokens] = identifier_token;
+      num_tokens++;
     }
   }
-  printf(" ----TOKEN LIST---- \n");
-  print_dArray(&TOKENS);
-  return TOKENS;
+  return tokens;
 }
 
 int main(int argc, char **argv) {
@@ -224,7 +216,12 @@ int main(int argc, char **argv) {
     printf(" \e[31m ERROR \e[0m: File could not be found");
   }
 
-  lexer(fptr);
-
+  Token *tokens = lexer(fptr);
+  printf("Tokens \n");
+  int i = 0;
+  while (tokens[i].type != END) {
+    printf("%i \t %i \t %s\n", i, tokens[i].type, tokens[i].value);
+    i++;
+  }
   return 0;
 }
