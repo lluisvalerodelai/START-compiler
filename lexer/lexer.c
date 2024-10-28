@@ -62,7 +62,8 @@ Token *lexer(FILE *fptr) {
 
     if (num_tokens > tokens_size) {
       tokens_size = tokens_size + 25;
-      tokens = realloc(tokens, sizeof(Token) * tokens_size);
+      tokens = realloc(tokens, sizeof(Token) * (tokens_size + 1));
+      tokens[tokens_size] = end_token;
     }
 
     c = fgetc(fptr);
@@ -83,34 +84,32 @@ Token *lexer(FILE *fptr) {
       }
     }
     if (c == '{') {
-      printf("found separator token \n");
       Token obrace = {.type = separator, .value = "{"};
       tokens[num_tokens] = obrace;
       num_tokens++;
     } else if (c == '}') {
-      printf("found separator token \n");
       Token cbrace = {.type = separator, .value = "}"};
       tokens[num_tokens] = cbrace;
       num_tokens++;
     } else if (c == '(') {
-      printf("found separator token \n");
       Token oparen = {.type = separator, .value = "("};
       tokens[num_tokens] = oparen;
       num_tokens++;
     } else if (c == ')') {
-      printf("found separator token \n");
       Token cparen = {.type = separator, .value = ")"};
       tokens[num_tokens] = cparen;
       num_tokens++;
     } else if (c == ';') {
-      printf("found separator token \n");
       Token sc = {.type = separator, .value = ";"};
       tokens[num_tokens] = sc;
       num_tokens++;
     } else if (c == '=') {
-      printf("found separator token \n");
-      Token ne = {.type = separator, .value = "="};
-      tokens[num_tokens] = ne;
+      Token e = {.type = separator, .value = "="};
+      tokens[num_tokens] = e;
+      num_tokens++;
+    } else if (c == '+') {
+      Token e = {.type = separator, .value = "+"};
+      tokens[num_tokens] = e;
       num_tokens++;
     } else if (c >= '0' && c <= '9') {
       char *buffer = malloc((sizeof(char) * 10) + 1);
@@ -138,7 +137,6 @@ Token *lexer(FILE *fptr) {
           break;
         }
       }
-      printf("Found numeric token: %s \n", buffer);
       Token numeric = {.type = literal, .value = buffer};
       tokens[num_tokens] = numeric;
       num_tokens++;
@@ -153,17 +151,14 @@ Token *lexer(FILE *fptr) {
 
       while (c != '"') {
         buffer[i] = c;
-        printf("i = %i\n", i);
         if ((i % 10) == 0) {
           char *temp_buffer = realloc(buffer, (i + 10) * sizeof(char));
           buffer = temp_buffer;
         }
-
         c = fgetc(fptr);
         i++;
       }
       buffer[i] = '"';
-      printf("found string token: %s \n", buffer);
       Token string_token = {.type = string, .value = buffer};
       tokens[num_tokens] = string_token;
       num_tokens++;
@@ -171,33 +166,54 @@ Token *lexer(FILE *fptr) {
 
     } else {
       int i = 1;
-      char *buffer = malloc((sizeof(char) * i) + 1);
-      while (isalnum(c) && c != EOF || c == '_' || c == '-') {
+      char *buffer = malloc((sizeof(char) * i) + 10);
+      while (isalnum(c) && c != EOF || c == '_' || c == '-' || c == ':' ||
+             c == '=' || c == '>') {
         buffer[i - 1] = c;
         i++;
         if (i % 10 == 0) {
           buffer = realloc(buffer, sizeof(char) * i);
         }
         char next_c = peek_next_char(fptr);
-        if (isalnum(next_c) || next_c == '_' || next_c == '-') {
+        if (isalnum(next_c) || next_c == '_' || next_c == '-' ||
+            next_c == ':' || next_c == '=' || next_c == '>') {
           c = fgetc(fptr);
         } else {
           break;
         }
       }
-      // fix this -> add a keyword token if its a keyword (use enum?) and if its
-      // not then add an identifier
-      if (strcmp(buffer, "main") == 0) {
+      if (strcmp(buffer, "var") == 0) {
         Token identifier_token = {.type = keyword, .value = buffer};
         tokens[num_tokens] = identifier_token;
         num_tokens++;
-      } else if (strcmp(buffer, "return") == 0) {
+      } else if (strcmp(buffer, "is") == 0) {
+        Token identifier_token = {
+            .type = keyword, .value = buffer}; // left as keyword for now, might
+        tokens[num_tokens] = identifier_token; // need to be changed to operator
+        num_tokens++;
+      } else if (strcmp(buffer, "char") == 0) {
         Token identifier_token = {.type = keyword, .value = buffer};
         tokens[num_tokens] = identifier_token;
         num_tokens++;
-      } else if (strcmp(buffer, "int") == 0) {
+      } else if (strcmp(buffer, "number") == 0) {
         Token identifier_token = {.type = keyword, .value = buffer};
         tokens[num_tokens] = identifier_token;
+        num_tokens++;
+      } else if (strcmp(buffer, "string") == 0) {
+        Token identifier_token = {.type = keyword, .value = buffer};
+        tokens[num_tokens] = identifier_token;
+        num_tokens++;
+      } else if (strcmp(buffer, "arguments") == 0) {
+        Token identifier_token = {.type = keyword, .value = buffer};
+        tokens[num_tokens] = identifier_token;
+        num_tokens++;
+      } else if (strcmp(buffer, ":=") == 0) {
+        Token operator_token = {.type = operator, .value = buffer };
+        tokens[num_tokens] = operator_token;
+        num_tokens++;
+      } else if (strcmp(buffer, "->") == 0) {
+        Token operator_token = {.type = operator, .value = buffer };
+        tokens[num_tokens] = operator_token;
         num_tokens++;
       } else {
         Token identifier_token = {.type = identifier, .value = buffer};
