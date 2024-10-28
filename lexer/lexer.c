@@ -188,17 +188,22 @@ Token *lexer(FILE *fptr) {
       // fix this -> add a keyword token if its a keyword (use enum?) and if its
       // not then add an identifier
       if (strcmp(buffer, "main") == 0) {
-        printf("Found keyword: main \n");
+        Token identifier_token = {.type = keyword, .value = buffer};
+        tokens[num_tokens] = identifier_token;
+        num_tokens++;
       } else if (strcmp(buffer, "return") == 0) {
-        printf("Found keyword: return\n");
+        Token identifier_token = {.type = keyword, .value = buffer};
+        tokens[num_tokens] = identifier_token;
+        num_tokens++;
       } else if (strcmp(buffer, "int") == 0) {
-        printf("Found keyword: int \n");
+        Token identifier_token = {.type = keyword, .value = buffer};
+        tokens[num_tokens] = identifier_token;
+        num_tokens++;
       } else {
-        printf("Found identifier: %s \n", buffer);
+        Token identifier_token = {.type = identifier, .value = buffer};
+        tokens[num_tokens] = identifier_token;
+        num_tokens++;
       }
-      Token identifier_token = {.type = identifier, .value = buffer};
-      tokens[num_tokens] = identifier_token;
-      num_tokens++;
     }
   }
   return tokens;
