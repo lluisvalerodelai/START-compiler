@@ -114,6 +114,18 @@ Token *lexer(FILE *fptr) {
       Token e = {.type = separator, .value = "+"};
       tokens[num_tokens] = e;
       num_tokens++;
+    } else if (c == '-') { // still doesent work
+      char next_c = peek_next_char(fptr);
+      if (next_c == '>') {
+        Token e = {.type = operator, .value = "->" };
+        tokens[num_tokens] = e;
+        num_tokens++;
+      } else {
+        Token e = {.type = operator, .value = "-" };
+        tokens[num_tokens] = e;
+        num_tokens++;
+      }
+
     } else if (c >= '0' && c <= '9') {
       char *buffer = malloc((sizeof(char) * 10) + 1);
       if (buffer == NULL) {
@@ -252,4 +264,5 @@ int main(int argc, char **argv) {
 
 // TODO:
 // static/dynamic branch prediction?
+// branch target buffer???
 // garbage collection
