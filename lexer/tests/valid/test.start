@@ -2,7 +2,7 @@ var a is number;
 var b is string;
 var c-23 is char;
 
-a - > 3000; 
+a -> 3000; 
 a = 1102;
 b = "hello world!";
 c = "a";
