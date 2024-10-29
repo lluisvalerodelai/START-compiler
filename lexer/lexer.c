@@ -226,10 +226,6 @@ Token *lexer(FILE *fptr) {
         Token operator_token = {.type = operator, .value = buffer };
         tokens[num_tokens] = operator_token;
         num_tokens++;
-      } else if (strcmp(buffer, "->") == 0) {
-        Token operator_token = {.type = operator, .value = buffer };
-        tokens[num_tokens] = operator_token;
-        num_tokens++;
       } else {
         Token identifier_token = {.type = identifier, .value = buffer};
         tokens[num_tokens] = identifier_token;
