@@ -1,6 +1,9 @@
 // TODO
-//  -redo token type system,
-//  -Token -> type, string value (convert numerics to ints in parsing)
+// fix the stupid "->" problem
+// if its a standalone -, then add a "-" token,
+// if the next char is a >, then add a "->" token
+// looks like it could be fixed when dealing with the single "-" char instead of
+// the identifier/keywords section??
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -246,3 +249,7 @@ int main(int argc, char **argv) {
   }
   return 0;
 }
+
+// TODO:
+// static/dynamic branch prediction?
+// garbage collection
