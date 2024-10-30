@@ -1,10 +1,3 @@
-// TODO
-// fix the stupid "->" problem
-// if its a standalone -, then add a "-" token,
-// if the next char is a >, then add a "->" token
-// looks like it could be fixed when dealing with the single "-" char instead of
-// the identifier/keywords section??
-
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -183,7 +176,7 @@ Token *lexer(FILE *fptr) {
       int i = 1;
       char *buffer = malloc((sizeof(char) * i) + 10);
       while (isalnum(c) && c != EOF || c == '_' || c == '-' || c == ':' ||
-             c == '=' || c == '>') {
+             c == '=') {
         buffer[i - 1] = c;
         i++;
         if (i % 10 == 0) {
@@ -191,7 +184,7 @@ Token *lexer(FILE *fptr) {
         }
         char next_c = peek_next_char(fptr);
         if (isalnum(next_c) || next_c == '_' || next_c == '-' ||
-            next_c == ':' || next_c == '=' || next_c == '>') {
+            next_c == ':' || next_c == '=') {
           c = fgetc(fptr);
         } else {
           break;
@@ -257,8 +250,3 @@ int main(int argc, char **argv) {
   }
   return 0;
 }
-
-// TODO:
-// static/dynamic branch prediction?
-// branch target buffer???
-// garbage collection
