@@ -99,11 +99,11 @@ Token *lexer(FILE *fptr) {
     } else if (c == '-') { // still doesent work
       char next_c = peek_next_char(fptr);
       if (next_c == '>') {
-        Token e = {.type = operator, .value = "->" };
+        Token e = {.type = operator_token, .value = "->"};
         tokens[num_tokens] = e;
         num_tokens++;
       } else {
-        Token e = {.type = operator, .value = "-" };
+        Token e = {.type = operator_token, .value = "-"};
         tokens[num_tokens] = e;
         num_tokens++;
       }
@@ -205,8 +205,8 @@ Token *lexer(FILE *fptr) {
         tokens[num_tokens] = identifier_token;
         num_tokens++;
       } else if (strcmp(buffer, ":=") == 0) {
-        Token operator_token = {.type = operator, .value = buffer };
-        tokens[num_tokens] = operator_token;
+        Token oper = {.type = operator_token, .value = buffer};
+        tokens[num_tokens] = oper;
         num_tokens++;
       } else {
         Token identifier_token = {.type = identifier, .value = buffer};
@@ -218,11 +218,12 @@ Token *lexer(FILE *fptr) {
   return tokens;
 }
 
-int main(int argc, char **argv) {
+// file for testing the output of lexer()
+
+void lexer_tester(int argc, char **argv) {
 
   if (argc != 2) {
     printf(" \e[31m ERROR \e[0m: LEXER accepts only 1 argument -> FILENAME \n");
-    return 1;
   }
   FILE *fptr = fopen(argv[1], "r");
 
@@ -237,5 +238,4 @@ int main(int argc, char **argv) {
     printf("%i \t %i \t %s\n", i, tokens[i].type, tokens[i].value);
     i++;
   }
-  return 0;
 }
