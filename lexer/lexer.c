@@ -1,24 +1,13 @@
+#include "lexer.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum {
-  identifier,
-  keyword,
-  separator,
-  operator,
-  literal,
-  comment,
-  string,
-  END,
-} token_type;
+enum token_type;
 
-typedef struct {
-  token_type type;
-  char *value;
-} Token;
+struct Token;
 
 char peek_next_char(FILE *file) {
   // Save the current position
