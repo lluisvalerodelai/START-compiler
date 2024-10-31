@@ -1,12 +1,1 @@
-int a = 200;
-float b = 3.14;
-char c = 'c';
-
-int foo(int x, int y){
-
-	if (x > y) {
-return x;} else {
-return y;}
-
-}
-
+int a = 3;
