@@ -1,21 +1,12 @@
-var a is number;
-var b is string;
-var c-23 is char;
+int a = 200;
+float b = 3.14;
+char c = 'c';
 
-a -> 3000; 
-a = 1102;
-b = "hello world!";
-c = "a";
-c := "helloooo";
+int foo(int x, int y){
 
-function concat is number{
-    arguments{ 
-        var c1 is char;
-        var c2 is char;
-    }
-	
-    var output is number;
-    output = c1 + c2;
-    return output;
+	if (x > y) {
+return x;} else {
+return y;}
+
 }
 
