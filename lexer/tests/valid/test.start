@@ -1,1 +1,10 @@
-int a = 3;
+int main(){
+  int a = 1000;
+  char b = "c";
+  string c = "hello world!";
+  for(int i = 0; i ! a; i++){
+    print("hello world");
+  }
+  
+  return 0;
+}

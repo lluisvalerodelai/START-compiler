@@ -5,22 +5,8 @@ using std::string;
 void pretty_print_tokens(std::vector<Token> tokens) {
   for (int i = 0; i < tokens.size(); i++) {
     Token tokens_i = tokens[i];
-    std::string type_str;
-    if (tokens_i.type == token_type::identifier){
-         type_str = "identifier";
-    } else if (tokens_i.type == token_type::keyword){
-         type_str = "keyword";
-    } else if (tokens_i.type == token_type::separator){
-         type_str = "separator";
-    } else if (tokens_i.type == token_type::operator_token){
-         type_str = "operator";
-    } else if (tokens_i.type == token_type::literal){
-         type_str = "literal";
-    } else if (tokens_i.type == token_type::END){
-         type_str = "END";
-    } 
-    std::cout << type_str << "\t";
-    std::cout << tokens_i.value << std::endl;
+    std::cout << "Token " << i << ": " << tokens_i.type;
+    std::cout << " value: "<< tokens_i.value << std::endl;
   }
 }
 
@@ -56,7 +42,7 @@ std::vector<Token> lexer(std::ifstream &F) {
     // check if its a separator
 
     if (c == '{') {
-      Token separator_token{.type = token_type::separator, .value = "{"};
+      Token separator_token{.type = token_type::keyword, .value = "{"};
       token_list.emplace_back(separator_token);
     } else if (c == '}') {
       Token separator_token{.type = token_type::separator, .value = "}"};
@@ -107,7 +93,7 @@ std::vector<Token> lexer(std::ifstream &F) {
             c = F.get();
             c = F.get();
           }else{
-            Token separator_token{.type = token_type::operator_token, .value = "+"};
+            Token separator_token{.type = token_type::separator, .value = "+"};
             token_list.emplace_back(separator_token);
           }
 
@@ -121,7 +107,7 @@ std::vector<Token> lexer(std::ifstream &F) {
               c = F.get();
               c = F.get();
             }else{
-              Token separator_token{.type = token_type::operator_token, .value = "-"};
+              Token separator_token{.type = token_type::separator, .value = "-"};
               token_list.emplace_back(separator_token);
             }
 
@@ -135,7 +121,7 @@ std::vector<Token> lexer(std::ifstream &F) {
               c = F.get();
               c = F.get();
             }else{
-              Token separator_token{.type = token_type::operator_token, .value = "*"};
+              Token separator_token{.type = token_type::separator, .value = "*"};
               token_list.emplace_back(separator_token);
             }
     } else if (c == '/') {
@@ -167,99 +153,37 @@ std::vector<Token> lexer(std::ifstream &F) {
           token_list.emplace_back(separator_token);
       } 
     // check if its a number,
-    }else if (c == '<'){
-      char next_c = F.peek();
-      if (next_c == '='){
-          Token separator_token{.type = token_type::operator_token, .value = "<="};
-          token_list.emplace_back(separator_token);
-          c = F.get();
-      } else {
-          Token separator_token{.type = token_type::operator_token, .value = "<"};
-          token_list.emplace_back(separator_token);
-      }
-
-    }else if (c == '>'){
-      char next_c = F.peek();
-        if (next_c == '='){
-            Token separator_token{.type = token_type::operator_token, .value = ">="};
-            token_list.emplace_back(separator_token);
-            c = F.get();
-        } else {
-            Token separator_token{.type = token_type::operator_token, .value = ">"};
-            token_list.emplace_back(separator_token);
-        }
-    } else if (c == '!'){
-      char next_c = F.peek();
-        if (next_c == '='){
-            Token separator_token{.type = token_type::operator_token, .value = "!="};
-            token_list.emplace_back(separator_token);
-            c = F.get();
-        } else {
-            Token separator_token{.type = token_type::operator_token, .value = "!"};
-            token_list.emplace_back(separator_token);
-        }
-    } else if ((isdigit(c) != 0 || c == '.')){
-      bool used_point = false;
+    } else if ((isdigit(c) != 0)){
       std::string number = "";
       number += c;
-      if (c == '.'){
-        used_point = true;
-      } 
       //is the current char a number?, then add it to the list and move on to the next and repeat
       char next_c = F.peek(); 
-      while (isdigit(next_c) || next_c == '.'){
-        if (next_c == '.' && used_point){
-          break;
-        }
+      while (isdigit(next_c)){
         c = F.get();
         number += c;
         next_c = F.peek();
-        if (!isdigit(F.peek()) && next_c != '.') {
+        if (!isdigit(F.peek())) {
           break; 
         }
       }
 
-      Token numeric{.type = token_type::literal, .value = number }; 
+      Token numeric{.type = token_type::operator_token, .value = number }; 
       token_list.emplace_back(numeric);
 
 
-  } else if (c == '"'){
-      std::string val = "";
-      c = F.get();
-      while (c != '"'){
-        val += c;
-        c = F.get();
-      }
-      Token str{.type = token_type::literal, .value = val}; 
-      token_list.emplace_back(str);
-  } else {
-      std::string buffer = "";
-      while (isalnum(c)){
-        buffer += c;
-        char next_c = F.peek();
-        if (isalnum(next_c)){
-          c = F.get(); 
-        } else {
-          break;
-        }
-      }
-      //check against all the known keywords
-      if (buffer == "int"     || buffer == "float"   ||
-          buffer == "char"    || buffer == "bool"    ||
-          buffer == "string"  || buffer == "return"  ||
-          buffer == "for"     || buffer == "while"   ||
-          buffer == "if"      || buffer == "else"    ||
-          buffer == "elif"    || buffer == "function"||
-          buffer == "returns" || buffer == "print"){
-        Token buf{.type = token_type::keyword, .value = buffer}; 
-        token_list.emplace_back(buf);
-    } else {
-        Token buf{.type = token_type::identifier, .value = buffer}; 
-        token_list.emplace_back(buf);
-    }
-    
+    // for as long as the char were on is a number, add it to the buffer, unless
+    // its a . if its a . we check if we have already added a . before and if
+    // not then we add it
+
+    // check for a string, when we see a ", fill up the buffer until the next ".
+    // turn off checks for ignorable characters
+    //
+    //  if its none of the above, then its either a keyword or an identifier, in
+    //  which case we fill up the buffer for as long as were in an alphanum
+    //  character until we see skippable chars
   }
-}
+
+  //add end token
   Token end_token{.type = token_type::END, .value = "END"};
   token_list.emplace_back(end_token);
   return token_list;

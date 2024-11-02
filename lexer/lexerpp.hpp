@@ -11,11 +11,10 @@ enum token_type {
   separator,
   operator_token,
   literal,
-  comment,
   END,
 };
 
 struct Token {
   token_type type;
-  char *value;
+  std::string value;
 };
