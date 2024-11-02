@@ -1,0 +1,21 @@
+{
+  "name": "lsp-client",
+  "description": "Implements LSP client functionalities",
+  "author": "Gergely",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "Hobby-stuff",
+  "repository": {
+    "type": "git",
+    "url": "-"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.81.0"
+  }
+}

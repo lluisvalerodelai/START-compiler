@@ -1,0 +1,33 @@
+{
+  "name": "custom-lsp",
+  "description": "An LSP built upon vscode's support",
+  "author": "Gergely",
+  "license": "MIT",
+  "version": "1.0.0",
+  "publisher": "Hobby-stuff",
+  "categories": [],
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "activationEvents": [
+    "onLanguage:customlang"
+  ],
+  "main": "./client/out/extension",
+  "contributes": {
+    "configuration": {},
+    "languages": [{
+      "id": "customlang",
+      "extensions": [".custom"]
+    }]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.7",
+    "typescript": "^5.2.2"
+  }
+}
