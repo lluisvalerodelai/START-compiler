@@ -1,0 +1,18 @@
+{
+  "name": "lsp-server",
+  "description": "Implements LSP server functionalities",
+  "version": "1.0.0",
+  "author": "Gergely",
+  "license": "MIT",
+  "engines": {
+    "node": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "-"
+  },
+  "dependencies": {
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  }
+}
