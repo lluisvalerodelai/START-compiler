@@ -1,21 +1,10 @@
-var a is number;
-var b is string;
-var c-23 is char;
-
-a -> 3000; 
-a = 1102;
-b = "hello world!";
-c = "a";
-c := "helloooo";
-
-function concat is number{
-    arguments{ 
-        var c1 is char;
-        var c2 is char;
-    }
-	
-    var output is number;
-    output = c1 + c2;
-    return output;
+int main(){
+  int a = 1000;
+  char b = "c";
+  string c = "hello world!";
+  for(int i = 0; i ! a; i++){
+    print("hello world");
+  }
+  
+  return 0;
 }
-
