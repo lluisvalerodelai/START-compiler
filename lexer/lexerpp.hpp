@@ -19,4 +19,7 @@ struct Token {
   token_type type;
   std::string value;
   int characterPosition;
+
+  Token(token_type t, const std::string& v, int pos)
+    : type(t), value(v), characterPosition(pos) {}
 };
