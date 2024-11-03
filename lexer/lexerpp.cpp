@@ -270,7 +270,7 @@ std::vector<Token> lexer(std::ifstream &F) {
   return token_list;
 }
 
-int main(int argc, char **argv) {
+int lexer_tester(int argc, char **argv) {
 
   string file_name = argv[1];
 
