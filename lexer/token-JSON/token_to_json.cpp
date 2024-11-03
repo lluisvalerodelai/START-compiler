@@ -1,6 +1,6 @@
 #include "token_to_json.hpp"
 
-const std::string JsonTokenFile("../../custom-LSP/lexer_out/tokens.json");
+const std::filesystem::path JsonTokenFile = std::filesystem::current_path() /  std::filesystem::path("../../custom-LSP/lexer_out/tokens.json");
 
 std::string escapeJsonString(const std::string &input)
 {
@@ -55,22 +55,20 @@ std::string ToJSON(const Token &token)
 
 void ToJSON(const std::vector<Token>& tokens)
 {
-	std::ofstream f(JsonTokenFile);
+	std::ofstream f(JsonTokenFile, std::ios::out);
 
 	if (!f.is_open()) {
         std::cerr << "Unable to open file: " << JsonTokenFile << std::endl;
         return;
     }
 
-	f << "[";
+	f << "[\n";
 	for (int i = 0; i < tokens.size(); ++i) {
         f << "  " << ToJSON(tokens[i]);
         if (i < tokens.size() - 1) {
             f << ",";
         }
-        f << std::endl;
+        f << "\n";
     }
     f << "]" << std::endl;
-
-	f.flush();
 }

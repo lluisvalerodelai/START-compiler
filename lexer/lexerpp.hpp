@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <sstream>
 #include <vector>
 
 enum token_type {

@@ -186,18 +186,18 @@ std::vector<Token> lexer(std::ifstream &F)
       }
       else if (next_c == '*') // Multiline comment
       {
-        std::ostringstream multilineCommentBuffer;
+        std::string multilineCommentBuffer;
         std::string commentBuffer;
 
         do
         {
           std::getline(F, commentBuffer);
-          multilineCommentBuffer << commentBuffer << "\n";
+          multilineCommentBuffer += commentBuffer + "\n";
         
         // The multiline comment stops once we hit a */ NOTE: We are expecting that no character will follow after */ in the same line!
         } while (commentBuffer.size() >= 2 && commentBuffer[commentBuffer.size() - 2] == '*' && commentBuffer.back() == '/');
 
-        token_list.emplace_back(token_type::comment, multilineCommentBuffer.str(), token_list.size());
+        token_list.emplace_back(token_type::comment, multilineCommentBuffer.substr(0, multilineCommentBuffer.size() - 2), token_list.size());
       }
       else
       {
@@ -248,8 +248,8 @@ std::vector<Token> lexer(std::ifstream &F)
     else if ((isdigit(c) != 0 || c == '.')) // TODO: This is not doing what we want it to do, fix later
     {
       bool used_point = false;
-      std::ostringstream number;
-      number << c;
+      std::string number;
+      number += c;
       if (c == '.')
       {
         used_point = true;
@@ -263,7 +263,7 @@ std::vector<Token> lexer(std::ifstream &F)
           break;
         }
         c = F.get();
-        number << c;
+        number += c;
         next_c = F.peek();
         if (!isdigit(F.peek()) && next_c != '.')
         {
@@ -271,18 +271,18 @@ std::vector<Token> lexer(std::ifstream &F)
         }
       }
 
-      token_list.emplace_back(token_type::literal, number.str(), token_list.size()); // Number literal
+      token_list.emplace_back(token_type::literal, number, token_list.size()); // Number literal
     }
     else if (c == '"')
     {
-      std::ostringstream val;
+      std::string val;
       c = F.get();
       while (c != '"')
       {
-        val << c;
+        val += c;
         c = F.get();
       }
-      token_list.emplace_back(token_type::literal, val.str(), token_list.size()); // String literal
+      token_list.emplace_back(token_type::literal, val, token_list.size()); // String literal
     }
     else
     {
