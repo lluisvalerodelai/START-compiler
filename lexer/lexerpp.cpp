@@ -25,7 +25,10 @@ void pretty_print_tokens(std::vector<Token> tokens) {
   }
 }
 
-std::vector<Token> lexer(std::ifstream &F) {
+std::vector<Token> lexer(const std::string& file_name) {
+
+  std::ifstream F{file_name};
+
   char c;
   bool are_checking_string = false;
 
@@ -274,9 +277,7 @@ int main(int argc, char **argv) {
 
   string file_name = argv[1];
 
-  std::ifstream fileObject{file_name};
-
-  std::vector<Token> tokens = lexer(fileObject);
+  std::vector<Token> tokens = lexer(file_name);
   pretty_print_tokens(tokens);
   return 0;
 }

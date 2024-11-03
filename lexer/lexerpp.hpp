@@ -24,4 +24,4 @@ struct Token {
       : type(t), value(v), characterPosition(pos) {}
 };
 
-std::vector<Token> lexer(std::ifstream &F);
+std::vector<Token> lexer(const std::string& file_name);
