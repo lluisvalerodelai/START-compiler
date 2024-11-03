@@ -20,6 +20,8 @@ struct Token {
   std::string value;
   int characterPosition;
 
-  Token(token_type t, const std::string& v, int pos)
-    : type(t), value(v), characterPosition(pos) {}
+  Token(token_type t, const std::string &v, int pos)
+      : type(t), value(v), characterPosition(pos) {}
 };
+
+std::vector<Token> lexer(std::ifstream &F);

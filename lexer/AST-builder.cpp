@@ -1,4 +1,4 @@
-#include "lexer.h"
+#include "lexerpp.hpp"
 #include <cstddef>
 #include <cstdio>
 #include <fstream>
@@ -18,7 +18,7 @@
 
 class baseASTnode {
 public:
-  baseASTnode(){};
+  baseASTnode() {};
 };
 
 class FunctionNode : baseASTnode {
@@ -57,10 +57,11 @@ int count_tokens(Token *tokens_list) {
 }
 
 int main(int argc, char *argv[]) {
+  std::string file_name = argv[1];
 
-  char *fname = argv[1];
-  FILE *fptr = std::fopen(fname, "r");
-  Token *tokens = lexer(fptr);
+  std::ifstream fileObject{file_name};
+
+  std::vector<Token> tokens = lexer(fileObject);
 
   baseASTnode main;
 
@@ -71,18 +72,6 @@ int main(int argc, char *argv[]) {
   std::cout << &main << "\n";
 
   std::cout << pointervector.back() << "\n";
-
-  if (fptr == NULL) {
-    perror("ERROR: File does not exist");
-    return 1;
-  }
-
-  int count = count_tokens(tokens);
-  for (int i = 0; i < count + 1; i++) {
-    std::cout << tokens[i].value << "\n";
-  }
-
-  fclose(fptr);
 
   return 0;
 }
