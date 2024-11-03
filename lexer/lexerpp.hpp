@@ -12,9 +12,11 @@ enum token_type {
   operator_token,
   literal,
   END,
+  comment,
 };
 
 struct Token {
   token_type type;
   std::string value;
+  int characterPosition;
 };
