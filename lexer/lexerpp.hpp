@@ -20,3 +20,6 @@ struct Token {
   std::string value;
   int characterPosition;
 };
+
+std::vector<Token> lexer(std::ifstream &F);
+void pretty_print_tokens(std::vector<Token> tokens);

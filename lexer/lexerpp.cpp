@@ -20,8 +20,7 @@ void pretty_print_tokens(std::vector<Token> tokens) {
       type_str = "END";
     }
     std::cout << type_str << "\t";
-    std::cout << tokens_i.value << "\t";
-    std::cout << tokens_i.characterPosition << std::endl;
+    std::cout << tokens_i.value << std::endl;
   }
 }
 
@@ -57,19 +56,29 @@ std::vector<Token> lexer(std::ifstream &F) {
     // check if its a separator
 
     if (c == '{') {
-      token_list.emplace_back(token_type::separator, "{", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = "{"};
+      token_list.emplace_back(separator_token);
     } else if (c == '}') {
-      token_list.emplace_back(token_type::separator, "}", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = "}"};
+      token_list.emplace_back(separator_token);
     } else if (c == '(') {
-      token_list.emplace_back(token_type::separator, "(", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = "("};
+      token_list.emplace_back(separator_token);
     } else if (c == ')') {
-      token_list.emplace_back(token_type::separator, ")", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = ")"};
+
+      token_list.emplace_back(separator_token);
     } else if (c == '[') {
-      token_list.emplace_back(token_type::separator, "[", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = "["};
+
+      token_list.emplace_back(separator_token);
     } else if (c == ']') {
-      token_list.emplace_back(token_type::separator, "]", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = "]"};
+
+      token_list.emplace_back(separator_token);
     } else if (c == ';') {
-      token_list.emplace_back(token_type::separator, ";", token_list.size());
+      Token separator_token{.type = token_type::separator, .value = ";"};
+      token_list.emplace_back(separator_token);
     } else if (c == '=') {
 
       // check if next char is a =, in which case the token is ==
@@ -77,135 +86,133 @@ std::vector<Token> lexer(std::ifstream &F) {
       char next_char = F.peek();
 
       if (next_char == '=') {
-        token_list.emplace_back(token_type::operator_token,
-                                "==", token_list.size());
-
+        Token separator_token{.type = token_type::operator_token,
+                              .value = "=="};
+        token_list.emplace_back(separator_token);
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
         c = F.get();
         c = F.get();
       } else {
-        token_list.emplace_back(token_type::operator_token, "=",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "="};
+        token_list.emplace_back(separator_token);
       }
+
     } else if (c == '+') {
 
       char next_char = F.peek();
 
       if (next_char == '=') {
-        token_list.emplace_back(token_type::operator_token,
-                                "+=", token_list.size());
-
+        Token separator_token{.type = token_type::operator_token,
+                              .value = "+="};
+        token_list.emplace_back(separator_token);
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
         c = F.get();
         c = F.get();
       } else {
-        token_list.emplace_back(token_type::operator_token, "+",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "+"};
+        token_list.emplace_back(separator_token);
       }
+
     } else if (c == '-') {
       char next_char = F.peek();
 
       if (next_char == '=') {
-        token_list.emplace_back(token_type::operator_token,
-                                "-=", token_list.size());
-
+        Token separator_token{.type = token_type::operator_token,
+                              .value = "-="};
+        token_list.emplace_back(separator_token);
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
         c = F.get();
         c = F.get();
       } else {
-        token_list.emplace_back(token_type::operator_token, "-",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "-"};
+        token_list.emplace_back(separator_token);
       }
+
     } else if (c == '*') {
       char next_char = F.peek();
 
       if (next_char == '=') {
-        token_list.emplace_back(token_type::operator_token,
-                                "*=", token_list.size());
-
+        Token separator_token{.type = token_type::operator_token,
+                              .value = "*="};
+        token_list.emplace_back(separator_token);
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
         c = F.get();
         c = F.get();
       } else {
-        token_list.emplace_back(token_type::operator_token, "*",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "*"};
+        token_list.emplace_back(separator_token);
       }
     } else if (c == '/') {
       // check if the next one isnt /, in which case add a comment token and go
       // to start of next line
       char next_c = F.get();
-      if (next_c == '/') // One line comment
-      {
-        // Reads the rest of the line and advances the file pointer to the next
-        // line's first char
-        std::string commentBuffer;
-        std::getline(F, commentBuffer);
-        token_list.emplace_back(token_type::comment, commentBuffer,
-                                token_list.size());
-      } else if (next_c == '*') // Multiline comment
-      {
-        std::string multilineCommentBuffer;
-        std::string commentBuffer;
-
-        do {
-          std::getline(F, commentBuffer);
-          multilineCommentBuffer += commentBuffer + "\n";
-
-          // The multiline comment stops once we hit a */ NOTE: We are expecting
-          // that no character will follow after */ in the same line!
-        } while (commentBuffer.size() >= 2 &&
-                 commentBuffer[commentBuffer.size() - 2] == '*' &&
-                 commentBuffer.back() == '/');
-
-        token_list.emplace_back(
-            token_type::comment,
-            multilineCommentBuffer.substr(0, multilineCommentBuffer.size() - 2),
-            token_list.size());
+      if (next_c == '/') {
+        // consume the next /
+        c = F.get();
+        // consume chars until we hit a line break char
+        while (c != '\n') {
+          c = F.get();
+        }
+        // first consume the last eol char, and check for \r\n eols
+        if (c == '\n') {
+          c = F.get();
+        }
+      } else if (next_c == '*') {
+        // consume next char
+        c = F.get();
+        c = F.get();
+        while (c != '*' && !F.eof()) {
+          c = F.get();
+        }
+        // we are at C = *, move to next char which will be /
+        c = F.get();
       } else {
         // if its none of those, add a / token
-        token_list.emplace_back(token_type::operator_token, "/",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "/"};
+        token_list.emplace_back(separator_token);
       }
       // check if its a number,
     } else if (c == '<') {
       char next_c = F.peek();
       if (next_c == '=') {
+        Token separator_token{.type = token_type::operator_token,
+                              .value = "<="};
+        token_list.emplace_back(separator_token);
         c = F.get();
-        token_list.emplace_back(token_type::operator_token,
-                                "<=", token_list.size());
       } else {
-        token_list.emplace_back(token_type::operator_token, "<",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "<"};
+        token_list.emplace_back(separator_token);
       }
+
     } else if (c == '>') {
       char next_c = F.peek();
       if (next_c == '=') {
+        Token separator_token{.type = token_type::operator_token,
+                              .value = ">="};
+        token_list.emplace_back(separator_token);
         c = F.get();
-        token_list.emplace_back(token_type::operator_token,
-                                ">=", token_list.size());
       } else {
-        token_list.emplace_back(token_type::operator_token, ">",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = ">"};
+        token_list.emplace_back(separator_token);
       }
     } else if (c == '!') {
       char next_c = F.peek();
       if (next_c == '=') {
+        Token separator_token{.type = token_type::operator_token,
+                              .value = "!="};
+        token_list.emplace_back(separator_token);
         c = F.get();
-        token_list.emplace_back(token_type::operator_token,
-                                "!=", token_list.size());
       } else {
-        token_list.emplace_back(token_type::operator_token, "!",
-                                token_list.size());
+        Token separator_token{.type = token_type::operator_token, .value = "!"};
+        token_list.emplace_back(separator_token);
       }
-    } else if ((isdigit(c) != 0 || c == '.')) // TODO: This is not doing what we
-                                              // want it to do, fix later
-    {
+    } else if ((isdigit(c) != 0 || c == '.')) {
       bool used_point = false;
-      std::string number;
+      std::string number = "";
       number += c;
       if (c == '.') {
         used_point = true;
@@ -225,17 +232,18 @@ std::vector<Token> lexer(std::ifstream &F) {
         }
       }
 
-      token_list.emplace_back(token_type::literal, number,
-                              token_list.size()); // Number literal
+      Token numeric{.type = token_type::literal, .value = number};
+      token_list.emplace_back(numeric);
+
     } else if (c == '"') {
-      std::string val;
+      std::string val = "";
       c = F.get();
       while (c != '"') {
         val += c;
         c = F.get();
       }
-      token_list.emplace_back(token_type::literal, val,
-                              token_list.size()); // String literal
+      Token str{.type = token_type::literal, .value = val};
+      token_list.emplace_back(str);
     } else {
       std::string buffer = "";
       while (isalnum(c)) {
@@ -253,24 +261,20 @@ std::vector<Token> lexer(std::ifstream &F) {
           buffer == "for" || buffer == "while" || buffer == "if" ||
           buffer == "else" || buffer == "elif" || buffer == "function" ||
           buffer == "returns" || buffer == "print") {
-        token_list.emplace_back(token_type::keyword, buffer,
-                                token_list.size()); // Built in keyword
+        Token buf{.type = token_type::keyword, .value = buffer};
+        token_list.emplace_back(buf);
       } else {
-        token_list.emplace_back(
-            token_type::identifier, buffer,
-            token_list.size()); // User defined variable / type
+        Token buf{.type = token_type::identifier, .value = buffer};
+        token_list.emplace_back(buf);
       }
     }
   }
-
-  token_list.emplace_back(
-      token_type::END, "END",
-      token_list.size()); // Add end token to indicate end of file
-
+  Token end_token{.type = token_type::END, .value = "END"};
+  token_list.emplace_back(end_token);
   return token_list;
 }
 
-int main(int argc, char **argv) {
+int _main(int argc, char **argv) {
 
   string file_name = argv[1];
 
