@@ -1,49 +1,56 @@
-#include "lexer.h"
+#include "lexerpp.hpp"
 #include <cstddef>
 #include <cstdio>
-#include <fstream>
-#include <ios>
 #include <iostream>
+#include <stack>
 #include <string>
 #include <vector>
 
-// int - a - = - 3 - ;
-// we have a baseASTnode class that whenever we point to a node we point to that
-// children classes of baseASTnode: FunctionNode, StatementNode, ExpressionNode
-// children classes of StatementNode (for now): varDecnAssign
-// varDecnAssign: identifier name, identifier type, identifier value
-// read token -int-, because so far we only have variable declarations and
-// assignments, we know already that we need to add to the AST a Var_decNassign
-// so we have main node, which has main.children[] -> a list of pointers to
-
-class baseASTnode {
+class Lang {
 public:
-  baseASTnode(){};
-};
+  std::vector<Token> tokens;
+  int line_nr = 0;
+  bool buffer_occupied = false;
+  std::stack<Token> token_wait_area;
+  std::stack<Token> inline_tokens;
 
-class FunctionNode : baseASTnode {
+  Lang(std::vector<Token> toks) {
+    for (int i = toks.size(); i > 0; i--) {
+      std::cout << "i is " << i << std::endl;
+      inline_tokens.push(toks[i]);
+    }
+    std::cout << "done" << std::endl;
+  }
 
-public:
-  FunctionNode() { std::cout << "function node constructed \n"; }
-};
-class StatementNode : baseASTnode {
+  void __raiseError(std::string message) {
+    throw std::invalid_argument("ERROR line " + std::to_string(line_nr) + ": " +
+                                message);
+  }
 
-public:
-  StatementNode() { std::cout << "statement node constructed \n"; }
-};
-class ExpressionNode : baseASTnode {
-
-public:
-  ExpressionNode() { std::cout << "expression node constructed \n"; }
-};
-
-class var_decNassign : StatementNode {
-public:
-  std::string identifier;
-  std::string type;
-  var_decNassign(std::string identifier_val, std::string identifier_type) {
-    identifier = identifier_val;
-    type = identifier_type;
+  // get the next token from our list of tokens
+  // if theres a token in the wating stage (buffer), give that instead
+  Token next_token() {
+    if (!token_wait_area.empty()) {
+      Token return_token = token_wait_area.top();
+      token_wait_area.pop();
+      return return_token;
+    } else {
+      std::cout << inline_tokens.empty() << std::endl;
+      Token return_token = inline_tokens.top();
+      std::cout << "made it to 41" << std::endl;
+      inline_tokens.pop();
+      return return_token;
+    }
+    std::cout << "leaving next_token()" << std::endl;
+  };
+  // sum aint right
+  void print_inline_tokens() {
+    std::cout << "printing inline tokens" << std::endl;
+    while (!inline_tokens.empty()) {
+      std::cout << inline_tokens.top().value;
+      inline_tokens.pop();
+    }
+    std::cout << std::endl;
   }
 };
 
@@ -56,33 +63,18 @@ int count_tokens(Token *tokens_list) {
   return count;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
 
-  char *fname = argv[1];
-  FILE *fptr = std::fopen(fname, "r");
-  Token *tokens = lexer(fptr);
+  std::string file_name = argv[1];
 
-  baseASTnode main;
+  std::ifstream fileObject{file_name};
 
-  std::vector<baseASTnode *> pointervector;
+  std::vector<Token> tokens = lexer(fileObject);
 
-  pointervector.push_back(&main);
-
-  std::cout << &main << "\n";
-
-  std::cout << pointervector.back() << "\n";
-
-  if (fptr == NULL) {
-    perror("ERROR: File does not exist");
-    return 1;
-  }
-
-  int count = count_tokens(tokens);
-  for (int i = 0; i < count + 1; i++) {
-    std::cout << tokens[i].value << "\n";
-  }
-
-  fclose(fptr);
+  Lang START(tokens);
+  Token top = START.next_token();
+  std::cout << "top token was " << top.value << std::endl;
+  START.print_inline_tokens();
 
   return 0;
 }
