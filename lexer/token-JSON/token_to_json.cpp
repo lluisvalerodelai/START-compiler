@@ -1,6 +1,6 @@
 #include "token_to_json.hpp"
 
-const std::filesystem::path JsonTokenFile = std::filesystem::current_path() /  std::filesystem::path("../../custom-LSP/lexer_out/tokens.json");
+const std::filesystem::path JsonTokenFile = std::filesystem::current_path() /  std::filesystem::path("../../lexer-ts-addon/lexer_out/tokens.json");
 
 std::string escapeJsonString(const std::string &input)
 {

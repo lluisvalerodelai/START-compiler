@@ -1,0 +1,21 @@
+{
+  "name": "lexer-ts-addon",
+  "version": "1.0.0",
+  "main": "src/main",
+  "scripts": {
+    "test": "tsc -b && node ./out/projectRoot.js",
+    "install": "node-gyp rebuild",
+    "build": "tsc -b && node out/main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "node-addon-api": "^8.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.7"
+  }
+}
