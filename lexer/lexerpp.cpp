@@ -260,7 +260,7 @@ std::vector<Token> lexer(std::ifstream &F) {
           buffer == "bool" || buffer == "string" || buffer == "return" ||
           buffer == "for" || buffer == "while" || buffer == "if" ||
           buffer == "else" || buffer == "elif" || buffer == "function" ||
-          buffer == "returns" || buffer == "print") {
+          buffer == "return" || buffer == "print") {
         Token buf{.type = token_type::keyword, .value = buffer};
         token_list.emplace_back(buf);
       } else {

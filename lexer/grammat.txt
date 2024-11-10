@@ -1,5 +1,6 @@
 program = <statement> + [statement + ...]
-statement = [("print" + <literal>) || (<type> + identifier + "=" + <literal>)]
-literal = integer || string || float 
-type = "int" || "string" || "float"
+statement =  [<print_statement> || <variable_declare_assign>] + ";"
+print_statement = "print" + "(" + literal + ")"
+variable_declare_assign = int + identifier + "=" + literal 
+
 
