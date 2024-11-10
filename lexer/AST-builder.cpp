@@ -1,5 +1,4 @@
 #include "lexerpp.hpp"
-#include <cstddef>
 #include <cstdio>
 #include <iostream>
 #include <stack>
@@ -15,11 +14,9 @@ public:
   std::stack<Token> inline_tokens;
 
   Lang(std::vector<Token> toks) {
-    for (int i = toks.size(); i > 0; i--) {
-      std::cout << "i is " << i << std::endl;
+    for (int i = toks.size() - 1; i >= 0; i--) {
       inline_tokens.push(toks[i]);
     }
-    std::cout << "done" << std::endl;
   }
 
   void __raiseError(std::string message) {
@@ -27,30 +24,77 @@ public:
                                 message);
   }
 
-  // get the next token from our list of tokens
-  // if theres a token in the wating stage (buffer), give that instead
   Token next_token() {
     if (!token_wait_area.empty()) {
-      Token return_token = token_wait_area.top();
+
+      Token top_token = token_wait_area.top();
       token_wait_area.pop();
-      return return_token;
+      return top_token;
+
     } else {
-      std::cout << inline_tokens.empty() << std::endl;
-      Token return_token = inline_tokens.top();
-      std::cout << "made it to 41" << std::endl;
+
+      if (inline_tokens.empty()) {
+        throw std::runtime_error("inline_tokens are empty");
+      }
+
+      Token top_token = inline_tokens.top();
       inline_tokens.pop();
-      return return_token;
+      return top_token;
     }
-    std::cout << "leaving next_token()" << std::endl;
   };
-  // sum aint right
+
+  void return_token(Token token) { token_wait_area.push(token); }
+
   void print_inline_tokens() {
-    std::cout << "printing inline tokens" << std::endl;
+    std::cout << "wait area tokens: \n";
+    while (!token_wait_area.empty()) {
+      std::cout << token_wait_area.top().value << ", ";
+      token_wait_area.pop();
+    }
+    std::cout << " \n inline tokens: \n";
     while (!inline_tokens.empty()) {
-      std::cout << inline_tokens.top().value;
+      std::cout << inline_tokens.top().value << ", ";
       inline_tokens.pop();
     }
     std::cout << std::endl;
+  }
+
+  bool parse_statement() {
+    if (!parse_print_statement()) { // for now the only statement is a print
+                                    // statement
+      __raiseError("Could not find any valid statements");
+    }
+    return true;
+  }
+
+  bool parse_print_statement() {
+    if (next_token().value != "print") { // is next token print
+      __raiseError("Expected print statement");
+    }
+    if (next_token().value != "(") { // is next token (
+      __raiseError("missing opening parenthesis in print statement");
+    }
+    if (!parse_literal_type()) { // is next token a literal
+      __raiseError("Expected print statement");
+    }
+    if (next_token().value != ")") { // is next token )
+      __raiseError("missing closing parenthesis in print statement");
+    }
+    // we checked that the first token in the stack was print, and that the next
+    // one was a literal, so the grammar is satisfied
+
+    if (next_token().value != ";") {
+      __raiseError("missing semicolon");
+    }
+
+    return true;
+  }
+
+  bool parse_literal_type() {
+    if (next_token().type != token_type::literal) {
+      __raiseError("expected literal");
+    }
+    return true;
   }
 };
 
@@ -71,10 +115,10 @@ int main(int argc, char **argv) {
 
   std::vector<Token> tokens = lexer(fileObject);
 
-  Lang START(tokens);
-  Token top = START.next_token();
-  std::cout << "top token was " << top.value << std::endl;
-  START.print_inline_tokens();
+  Lang e(tokens);
+  std::cout << e.parse_statement();
+  std::cout << e.parse_statement();
+  std::cout << e.parse_statement();
 
   return 0;
 }
