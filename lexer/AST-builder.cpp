@@ -12,35 +12,43 @@ public:
   bool buffer_occupied = false;
   std::stack<Token> token_wait_area;
   std::stack<Token> inline_tokens;
+  std::vector<std::string> errors;
 
   Lang(std::vector<Token> toks) {
+    toks.erase(toks.end() - 2);
     for (int i = toks.size() - 1; i >= 0; i--) {
       inline_tokens.push(toks[i]);
     }
   }
 
-  void __raiseError(std::string message) {
-    throw std::invalid_argument("ERROR line " + std::to_string(line_nr) + ": " +
-                                message);
+  void stack_collapse() {
+    std::cout << "STACK COLLAPSE" << "\n";
+    while (!token_wait_area.empty()) {
+      Token top_token = token_wait_area.top();
+      token_wait_area.pop();
+      inline_tokens.push(top_token);
+    }
+  }
+
+  void clear_stack() {
+    while (!token_wait_area.empty()) {
+      token_wait_area.pop();
+    }
+  }
+
+  void add_error(std::string message) {
+    errors.emplace_back("ERROR line " + std::to_string(line_nr) + ": " +
+                        message);
   }
 
   Token next_token() {
-    if (!token_wait_area.empty()) {
-
-      Token top_token = token_wait_area.top();
-      token_wait_area.pop();
-      return top_token;
-
-    } else {
-
-      if (inline_tokens.empty()) {
-        throw std::runtime_error("inline_tokens are empty");
-      }
-
-      Token top_token = inline_tokens.top();
-      inline_tokens.pop();
-      return top_token;
+    if (inline_tokens.empty()) {
+      throw std::runtime_error("inline_tokens are empty");
     }
+
+    Token top_token = inline_tokens.top();
+    inline_tokens.pop();
+    return top_token;
   };
 
   void return_token(Token token) { token_wait_area.push(token); }
@@ -59,40 +67,102 @@ public:
     std::cout << std::endl;
   }
 
+  bool parse_program() {
+    if (!parse_statement()) {
+      return false;
+    }
+    while (inline_tokens.top().value != "END") {
+      if (!parse_statement()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool parse_statement() {
-    if (!parse_print_statement()) { // for now the only statement is a print
-                                    // statement
-      __raiseError("Could not find any valid statements");
+    if (!parse_dec_ass() && !parse_print_statement()) {
+      return false;
+    }
+    if (!parse_semicolon()) {
+      return false;
+    }
+    clear_stack(); // need to clear stack again after checking for semicolon
+                   // since we dont take care of it in previous functs
+    return true;
+  }
+
+  bool parse_semicolon() {
+    Token token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.value != ";") {
+      stack_collapse();
+      return false;
     }
     return true;
   }
 
   bool parse_print_statement() {
-    if (next_token().value != "print") { // is next token print
-      __raiseError("Expected print statement");
+    Token token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.value != "print") {
+      stack_collapse();
+      return false;
     }
-    if (next_token().value != "(") { // is next token (
-      __raiseError("missing opening parenthesis in print statement");
+    token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.value != "(") {
+      stack_collapse();
+      return false;
     }
-    if (!parse_literal_type()) { // is next token a literal
-      __raiseError("Expected print statement");
+    if (!parse_expression()) {
+      return false;
     }
-    if (next_token().value != ")") { // is next token )
-      __raiseError("missing closing parenthesis in print statement");
+    token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.value != ")") {
+      stack_collapse();
+      return false;
     }
-    // we checked that the first token in the stack was print, and that the next
-    // one was a literal, so the grammar is satisfied
-
-    if (next_token().value != ";") {
-      __raiseError("missing semicolon");
-    }
-
+    clear_stack();
     return true;
   }
 
-  bool parse_literal_type() {
-    if (next_token().type != token_type::literal) {
-      __raiseError("expected literal");
+  bool parse_dec_ass() {
+    Token token_next = next_token();
+    token_wait_area.push(token_next);
+
+    if (token_next.value != "int") {
+      stack_collapse();
+      return false;
+    }
+    token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.type != token_type::identifier) {
+      stack_collapse();
+      return false;
+    }
+    token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.value != "=") {
+      stack_collapse();
+      return false;
+    }
+    token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.type != token_type::literal) {
+      stack_collapse();
+      return false;
+    }
+    clear_stack();
+    return true;
+  }
+
+  bool parse_expression() {
+    Token token_next = next_token();
+    token_wait_area.push(token_next);
+    if (token_next.type != token_type::literal) {
+      stack_collapse();
+      return false;
     }
     return true;
   }
@@ -116,9 +186,13 @@ int main(int argc, char **argv) {
   std::vector<Token> tokens = lexer(fileObject);
 
   Lang e(tokens);
-  std::cout << e.parse_statement();
-  std::cout << e.parse_statement();
-  std::cout << e.parse_statement();
+  bool result = e.parse_program();
+
+  if (result) {
+    std::cout << "compilation completed succesfully \n";
+  } else {
+    std::cout << "compilation failed \n";
+  }
 
   return 0;
 }
