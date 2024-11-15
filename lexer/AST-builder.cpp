@@ -1,14 +1,36 @@
 #include "lexerpp.hpp"
+#include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <stack>
 #include <string>
 #include <vector>
 
+enum AST_node_type {
+  program_node,
+  print,
+  declare_and_assign,
+  expression,
+  identifier_name,
+  type_identifier,
+};
+
 struct AST_node {
-  std::string type;
   AST_node *parent = nullptr;
   std::vector<AST_node *> children;
+  AST_node_type node_type;
+};
+
+class AST_node_class {
+public:
+  AST_node_class *parent = nullptr;
+  std::vector<AST_node_class *> children;
+
+  void set_parent(AST_node_class *parent_to_set) { parent = parent_to_set; }
+
+  void add_child(AST_node_class *child_to_add) {
+    children.emplace_back(child_to_add);
+  }
 };
 
 class Lang {
@@ -58,28 +80,34 @@ public:
 
   void print_inline_tokens() {
     std::cout << "wait area tokens: \n";
+
     while (!token_wait_area.empty()) {
       std::cout << token_wait_area.top().value << ", ";
       token_wait_area.pop();
     }
+
     std::cout << " \n inline tokens: \n";
     while (!inline_tokens.empty()) {
       std::cout << inline_tokens.top().value << ", ";
       inline_tokens.pop();
     }
+
     std::cout << std::endl;
   }
 
   bool parse_program(AST_node *program_node) {
-    program_node->type = "program_node";
+    program_node->node_type = AST_node_type::program_node;
+
     if (!parse_statement(program_node)) {
       return false;
     }
+
     while (inline_tokens.top().value != "END") {
       if (!parse_statement(program_node)) {
         return false;
       }
     }
+
     return true;
   }
 
@@ -108,11 +136,11 @@ public:
   bool parse_print_statement(AST_node *parent_node) {
 
     AST_node *possible_child_node = new AST_node;
-
-    possible_child_node->type = "print_node";
+    possible_child_node->node_type = AST_node_type::print;
 
     Token token_next = next_token();
     token_wait_area.push(token_next);
+
     if (token_next.value != "print") {
       stack_collapse();
       return false;
@@ -151,7 +179,7 @@ public:
   // keyword that identifies some type
   bool parse_type_identifier(AST_node *parent) {
     AST_node *possible_child_node = new AST_node;
-    possible_child_node->type = "type_identifier";
+    possible_child_node->node_type = AST_node_type::type_identifier;
 
     Token token_next = next_token();
     token_wait_area.push(token_next);
@@ -169,7 +197,7 @@ public:
 
   bool parse_identifier(AST_node *parent) {
     AST_node *potential_child = new AST_node;
-    potential_child->type = "identifier";
+    potential_child->node_type = AST_node_type::identifier_name;
 
     Token token_next = next_token();
     token_wait_area.push(token_next);
@@ -186,7 +214,7 @@ public:
 
   bool parse_dec_ass(AST_node *parent) {
     AST_node *possible_child_node = new AST_node;
-    possible_child_node->type = "declaration & assignment node";
+    possible_child_node->node_type = AST_node_type::declare_and_assign;
 
     if (!parse_type_identifier(possible_child_node)) {
       stack_collapse();
@@ -219,7 +247,7 @@ public:
 
   bool parse_expression(AST_node *parent) {
     AST_node *potential_child = new AST_node;
-    potential_child->type = "expression";
+    potential_child->node_type = AST_node_type::expression;
 
     Token token_next = next_token();
     token_wait_area.push(token_next);
@@ -246,8 +274,28 @@ int count_tokens(Token *tokens_list) {
   return count;
 }
 
+std::string give_node_type_string(AST_node *node) {
+
+  switch (node->node_type) {
+  case AST_node_type::program_node:
+    return "program_node";
+  case AST_node_type::print:
+    return "print_node";
+  case AST_node_type::identifier_name:
+    return "Identifier_node";
+  case AST_node_type::declare_and_assign:
+    return "variable_declaration_&_assignment_node";
+  case AST_node_type::expression:
+    return "expression_node";
+  case AST_node_type::type_identifier:
+    return "type_identifier_node";
+  }
+
+  return "node was not assigned type";
+}
+
 void print_tree_from_node(AST_node *node, int depth) {
-  std::cout << std::string(depth, '-') << "node: " << node->type << "\n";
+  std::cout << std::string(depth, '-') << give_node_type_string(node) << "\n";
 
   if (node->children.size() == 0) {
     return;
