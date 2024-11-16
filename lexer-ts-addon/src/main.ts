@@ -1,12 +1,9 @@
-import { requestTokens } from './tokenRequester';
+import path = require("path");
+import { projectRoot } from "./projectRoot";
+import { lexer, Token, token_type } from "./lexer_addon";
 
-async function main() {
-	try {
-		const tokens = await requestTokens("This/file/is/going/to/be/parsed");
-		console.log('Tokens:', tokens);
-	} catch (error) {
-		console.error('Error:', error);
-	}
-}
+const testPath = path.join(projectRoot, "..", "lexer", "tests", "valid", "test.c");
+console.log("Path: ", testPath);
 
-main();
+const result: Token[] = lexer(testPath);
+console.log("Results: ", result);

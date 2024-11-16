@@ -27,7 +27,12 @@ void pretty_print_tokens(std::vector<Token> tokens) {
 
 std::vector<Token> lexer(const std::string& file_name) {
 
-  std::ifstream F{file_name};
+  std::ifstream F{file_name, std::ifstream::in};
+  // If we can not open the file
+  if (F.fail()) {
+    std::cerr << "[C++] Error: " << strerror(errno) << std::endl;
+    return std::vector<Token>{};
+  }
 
   char c;
   bool are_checking_string = false;

@@ -1,4 +1,4 @@
 node_modules
-#out
-#build
 tsconfig.tsbuildinfo
+.vscode
+build

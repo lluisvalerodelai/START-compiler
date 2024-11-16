@@ -1,19 +1,22 @@
 {
   "name": "lexer-ts-addon",
   "version": "1.0.0",
+  "description": "Makes it possible to call the lexer from typescript code.",
   "main": "src/main",
-  "scripts": {
-    "test": "tsc -b && node ./out/projectRoot.js",
-    "install": "node-gyp rebuild",
-    "build": "tsc -b && node out/main.js"
-  },
+  "private": true,
   "keywords": [],
-  "author": "",
+  "author": "Gergely",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "fs": "^0.0.1-security",
-    "node-addon-api": "^8.2.1"
+    "bindings":"^1.5.0",
+    "node-addon-api": "^8.2.2"
+  },
+  "gypfile": true,
+  "scripts": {
+    "test-root": "tsc -b && node ./out/projectRoot.js",
+    "clean-gyp": "node-gyp clean && node-gyp configure",
+    "rebuild": "tsc -b && node-gyp rebuild",
+    "test-main": "tsc -b && node out/main.js"
   },
   "devDependencies": {
     "@types/node": "^22.8.7"

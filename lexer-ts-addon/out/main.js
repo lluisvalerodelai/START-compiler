@@ -1,25 +1,10 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const tokenRequester_1 = require("./tokenRequester");
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const tokens = yield (0, tokenRequester_1.requestTokens)("This/file/is/going/to/be/parsed");
-            console.log('Tokens:', tokens);
-        }
-        catch (error) {
-            console.error('Error:', error);
-        }
-    });
-}
-main();
+const path = require("path");
+const projectRoot_1 = require("./projectRoot");
+const lexer_addon_1 = require("./lexer_addon");
+const testPath = path.join(projectRoot_1.projectRoot, "..", "lexer", "tests", "valid", "test.c");
+console.log("Path: ", testPath);
+const result = (0, lexer_addon_1.lexer)(testPath);
+console.log("Results: ", result);
 //# sourceMappingURL=main.js.map
