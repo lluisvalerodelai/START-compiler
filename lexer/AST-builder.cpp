@@ -15,22 +15,76 @@ enum AST_node_type {
   type_identifier,
 };
 
-struct AST_node {
-  AST_node *parent = nullptr;
-  std::vector<AST_node *> children;
-  AST_node_type node_type;
+enum variable_types {
+  int_type,
+  float_type,
+  char_type,
+  string_type,
 };
 
-class AST_node_class {
+class base_ast_node {
 public:
-  AST_node_class *parent = nullptr;
-  std::vector<AST_node_class *> children;
+  base_ast_node *parent = nullptr;
+  std::vector<base_ast_node *> children;
+  AST_node_type node_type; // temporary until hierarchy is added
 
-  void set_parent(AST_node_class *parent_to_set) { parent = parent_to_set; }
+  void set_parent(base_ast_node *parent_to_set) { parent = parent_to_set; }
 
-  void add_child(AST_node_class *child_to_add) {
+  void add_child(base_ast_node *child_to_add) {
     children.emplace_back(child_to_add);
   }
+
+  virtual ~base_ast_node() = default;
+};
+
+class identifier_node : public base_ast_node {
+public:
+  std::string value;
+
+  void set_value(std::string identifier_name) { value = identifier_name; }
+
+  virtual ~identifier_node() = default;
+};
+
+class type_identifier_node : public base_ast_node {
+public:
+  variable_types type;
+
+  void set_value(variable_types t) { type = t; }
+
+  virtual ~type_identifier_node() = default;
+};
+
+class expression_node : public base_ast_node {
+public:
+  virtual ~expression_node() = default;
+};
+
+class string_expression_node : public expression_node {
+public:
+  const std::string string_value;
+
+  string_expression_node(std::string s) : string_value(s) {}
+
+  virtual ~string_expression_node() = default;
+};
+
+class int_expression_node : public expression_node {
+public:
+  const int int_value;
+
+  int_expression_node(int i) : int_value(i) {}
+
+  virtual ~int_expression_node() = default;
+};
+
+class float_expression_node : public expression_node {
+public:
+  const float float_value;
+
+  float_expression_node(float f) : float_value(f) {}
+
+  virtual ~float_expression_node() = default;
 };
 
 class Lang {
@@ -95,7 +149,7 @@ public:
     std::cout << std::endl;
   }
 
-  bool parse_program(AST_node *program_node) {
+  bool parse_program(base_ast_node *program_node) {
     program_node->node_type = AST_node_type::program_node;
 
     if (!parse_statement(program_node)) {
@@ -111,7 +165,7 @@ public:
     return true;
   }
 
-  bool parse_statement(AST_node *parent_node) {
+  bool parse_statement(base_ast_node *parent_node) {
     if (!parse_dec_ass(parent_node) && !parse_print_statement(parent_node)) {
       return false;
     }
@@ -133,9 +187,9 @@ public:
     return true;
   }
 
-  bool parse_print_statement(AST_node *parent_node) {
+  bool parse_print_statement(base_ast_node *parent_node) {
 
-    AST_node *possible_child_node = new AST_node;
+    base_ast_node *possible_child_node = new base_ast_node;
     possible_child_node->node_type = AST_node_type::print;
 
     Token token_next = next_token();
@@ -177,8 +231,8 @@ public:
   // important distinction to be made here
   // parse_type_identifier does not parse for an identifier, it parses for the
   // keyword that identifies some type
-  bool parse_type_identifier(AST_node *parent) {
-    AST_node *possible_child_node = new AST_node;
+  bool parse_type_identifier(base_ast_node *parent) {
+    type_identifier_node *possible_child_node = new type_identifier_node;
     possible_child_node->node_type = AST_node_type::type_identifier;
 
     Token token_next = next_token();
@@ -186,8 +240,17 @@ public:
 
     if (token_next.value != "int" && token_next.value != "string" &&
         token_next.value != "float") {
-      stack_collapse();
       return false;
+    } else {
+      if (token_next.value == "int") {
+        possible_child_node->type = variable_types::int_type;
+      }
+      if (token_next.value == "float") {
+        possible_child_node->type = variable_types::float_type;
+      }
+      if (token_next.value == "string") {
+        possible_child_node->type = variable_types::string_type;
+      }
     }
 
     possible_child_node->parent = parent;
@@ -195,8 +258,8 @@ public:
     return true;
   }
 
-  bool parse_identifier(AST_node *parent) {
-    AST_node *potential_child = new AST_node;
+  bool parse_identifier(base_ast_node *parent) {
+    identifier_node *potential_child = new identifier_node;
     potential_child->node_type = AST_node_type::identifier_name;
 
     Token token_next = next_token();
@@ -205,6 +268,8 @@ public:
     if (token_next.type != token_type::identifier) { // if not parse identifier
       stack_collapse();
       return false;
+    } else {
+      potential_child->value = token_next.value;
     }
 
     potential_child->parent = parent;
@@ -212,8 +277,8 @@ public:
     return true;
   }
 
-  bool parse_dec_ass(AST_node *parent) {
-    AST_node *possible_child_node = new AST_node;
+  bool parse_dec_ass(base_ast_node *parent) {
+    base_ast_node *possible_child_node = new base_ast_node;
     possible_child_node->node_type = AST_node_type::declare_and_assign;
 
     if (!parse_type_identifier(possible_child_node)) {
@@ -245,8 +310,8 @@ public:
     return true;
   }
 
-  bool parse_expression(AST_node *parent) {
-    AST_node *potential_child = new AST_node;
+  bool parse_expression(base_ast_node *parent) {
+    expression_node *potential_child = new expression_node;
     potential_child->node_type = AST_node_type::expression;
 
     Token token_next = next_token();
@@ -255,6 +320,23 @@ public:
     if (token_next.type != token_type::literal) {
       stack_collapse();
       return false;
+    } else {
+      // TODO: this : make sure to name whichever token you create
+      // potential_child
+      //  if its an int
+      //    check that its the same type as the type it was declared as
+      //    if yes
+      //      make a int node type
+      //  if its a float
+      //    check that its the same type as the type it was declared as
+      //    if yes
+      //      make a float node type
+      //  if its a string
+      //    check that its the same type as the type it was declared as
+      //    if yes
+      //      make a float node type
+
+      //
     }
 
     potential_child->parent = parent;
@@ -274,7 +356,7 @@ int count_tokens(Token *tokens_list) {
   return count;
 }
 
-std::string give_node_type_string(AST_node *node) {
+std::string give_node_type_string(base_ast_node *node) {
 
   switch (node->node_type) {
   case AST_node_type::program_node:
@@ -294,8 +376,29 @@ std::string give_node_type_string(AST_node *node) {
   return "node was not assigned type";
 }
 
-void print_tree_from_node(AST_node *node, int depth) {
-  std::cout << std::string(depth, '-') << give_node_type_string(node) << "\n";
+void print_tree_from_node(base_ast_node *node, int depth) {
+  std::cout << std::string(depth, '-') << give_node_type_string(node) << ": ";
+
+  if (const identifier_node *i_node = dynamic_cast<identifier_node *>(node)) {
+    std::cout << i_node->value;
+  }
+
+  if (const type_identifier_node *i_node =
+          dynamic_cast<type_identifier_node *>(node)) {
+    if (i_node->type == variable_types::int_type) {
+      std::cout << "int";
+    } else if (i_node->type == variable_types::char_type) {
+      std::cout << "char";
+    } else if (i_node->type == variable_types::float_type) {
+      std::cout << "float";
+    } else if (i_node->type == variable_types::char_type) {
+      std::cout << "char";
+    } else if (i_node->type == variable_types::string_type) {
+      std::cout << "string";
+    }
+  }
+
+  std::cout << "\n";
 
   if (node->children.size() == 0) {
     return;
@@ -322,7 +425,7 @@ int main(int argc, char **argv) {
 
   std::vector<Token> tokens = lexer(fileObject);
 
-  AST_node root;
+  base_ast_node root;
 
   Lang e(tokens);
   bool result = e.parse_program(&root);
@@ -335,34 +438,5 @@ int main(int argc, char **argv) {
 
   print_tree_from_node(&root, 0);
 
-  /* for testing purposes
-  AST_node root;
-  AST_node child1;
-  AST_node child2;
-  AST_node child3;
-  AST_node c31;
-  AST_node c32;
-
-  root.type = "root";
-  child1.type = "child1";
-  child2.type = "child2";
-  child3.type = "child3";
-  c31.type = "c31";
-  c32.type = "c32";
-  root.children.emplace_back(&child1);
-  root.children.emplace_back(&child3);
-  root.children.emplace_back(&child2);
-
-  child1.parent = &root;
-  child2.parent = &root;
-  child3.parent = &root;
-  c31.parent = &child3;
-  c32.parent = &child3;
-
-  child3.children.emplace_back(&c31);
-  child3.children.emplace_back(&c32);
-
-  print_tree_from_node(&root, 0);
-  */
   return 0;
 }
