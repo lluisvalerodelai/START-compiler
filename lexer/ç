@@ -3,9 +3,7 @@
 #include <cstdio>
 #include <iostream>
 #include <stack>
-#include <stdexcept>
 #include <string>
-#include <variant>
 #include <vector>
 
 enum AST_node_type {
@@ -20,6 +18,7 @@ enum AST_node_type {
 enum variable_types {
   int_type,
   float_type,
+  char_type,
   string_type,
 };
 
@@ -58,8 +57,34 @@ public:
 
 class expression_node : public base_ast_node {
 public:
-  std::variant<int, float, std::string> value;
   virtual ~expression_node() = default;
+};
+
+class string_expression_node : public expression_node {
+public:
+  const std::string string_value;
+
+  string_expression_node(std::string s) : string_value(s) {}
+
+  virtual ~string_expression_node() = default;
+};
+
+class int_expression_node : public expression_node {
+public:
+  const int int_value;
+
+  int_expression_node(int i) : int_value(i) {}
+
+  virtual ~int_expression_node() = default;
+};
+
+class float_expression_node : public expression_node {
+public:
+  const float float_value;
+
+  float_expression_node(float f) : float_value(f) {}
+
+  virtual ~float_expression_node() = default;
 };
 
 class Lang {
@@ -296,14 +321,24 @@ public:
       stack_collapse();
       return false;
     } else {
+      // TODO: this : make sure to name whichever token you create
+      // potential_child
+      //  if its an int
+      //    check that its the same type as the type it was declared as
+      //    if yes
+      //      make a int node type
+      //  if its a float
+      //    check that its the same type as the type it was declared as
+      //    if yes
+      //      make a float node type
+      //  if its a string
+      //    check that its the same type as the type it was declared as
+      //    if yes
+      //      make a float node type
 
-      if (parent->node_type == AST_node_type::declare_and_assign) {
-
-        const type_identifier_node *type_node =
-            dynamic_cast<type_identifier_node *>(parent->children[0]);
-
-        potential_child->value = token_next.value;
-      }
+      // returning all 4 because thats identifier
+      std::cout << "hello " << "looking at: " << token_next.value << std::endl;
+      std::cout << token_next.type << std::endl;
     }
 
     potential_child->parent = parent;
@@ -354,16 +389,15 @@ void print_tree_from_node(base_ast_node *node, int depth) {
           dynamic_cast<type_identifier_node *>(node)) {
     if (i_node->type == variable_types::int_type) {
       std::cout << "int";
+    } else if (i_node->type == variable_types::char_type) {
+      std::cout << "char";
     } else if (i_node->type == variable_types::float_type) {
       std::cout << "float";
+    } else if (i_node->type == variable_types::char_type) {
+      std::cout << "char";
     } else if (i_node->type == variable_types::string_type) {
       std::cout << "string";
     }
-  }
-  // lol
-  if (const expression_node *e_node = dynamic_cast<expression_node *>(node)) {
-    std::visit([](auto &&arg) { std::cout << arg << std::endl; },
-               e_node->value);
   }
 
   std::cout << "\n";

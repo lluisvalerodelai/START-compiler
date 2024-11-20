@@ -1,4 +1,4 @@
-string yayitworks = "hello_world";
-print("hello world!");
+string pi = "hello world!";
+int helloworld = 300;
+print(pi);
 float floatvariable = 3.14;
-int pi = 3;
