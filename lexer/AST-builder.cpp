@@ -141,6 +141,34 @@ public:
   }
 
   bool parse_statement(base_ast_node *parent_node) {
+
+    // statement =  [{ + statement + [statement] + } || <print_statement> ||
+    // <variable_declare_assign>] + ";"
+    if (inline_tokens.top().value == "{") {
+      inline_tokens.pop();
+
+      if (!parse_statement(parent_node)) {
+        stack_collapse();
+        return false;
+      } else {
+        while (inline_tokens.top().value != "}") {
+          if (!parse_statement(parent_node)) {
+            stack_collapse();
+            return false;
+          }
+        }
+      }
+
+      if (inline_tokens.top().value != "}") {
+        stack_collapse();
+        return false;
+      } else {
+        inline_tokens.pop();
+      }
+
+      return true;
+    }
+
     if (!parse_dec_ass(parent_node) && !parse_print_statement(parent_node)) {
       return false;
     }
@@ -149,6 +177,7 @@ public:
     }
     clear_stack(); // need to clear stack again after checking for semicolon
                    // since we dont take care of it in previous functs
+
     return true;
   }
 
@@ -285,29 +314,28 @@ public:
     return true;
   }
 
-  bool parse_expression(base_ast_node *parent) {
+  bool parse_expression(base_ast_node *parent, bool recursive_call = false) {
+
+    // expression = [int || string || float || ( + expression + )]
+
     expression_node *potential_child = new expression_node;
     potential_child->node_type = AST_node_type::expression;
 
     Token token_next = next_token();
     token_wait_area.push(token_next);
 
-    if (token_next.type != token_type::literal) {
-      stack_collapse();
-      return false;
-    } else {
+    if (token_next.type == token_type::literal) {
 
-      if (parent->node_type == AST_node_type::declare_and_assign) {
+      potential_child->parent = parent;
+      potential_child->value = token_next.value;
+      parent->children.emplace_back(potential_child);
 
-        const type_identifier_node *type_node =
-            dynamic_cast<type_identifier_node *>(parent->children[0]);
-
-        potential_child->value = token_next.value;
-      }
+      return true;
     }
 
     potential_child->parent = parent;
     parent->children.emplace_back(potential_child);
+
     return true;
   }
 };
