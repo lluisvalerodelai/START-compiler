@@ -1,7 +1,9 @@
 #include "lexerpp.hpp"
 #include <cmath>
 #include <cstdio>
+#include <execution>
 #include <iostream>
+#include <iterator>
 #include <stack>
 #include <stdexcept>
 #include <string>
@@ -21,6 +23,13 @@ enum variable_types {
   int_type,
   float_type,
   string_type,
+};
+
+enum bin_operators {
+  plus,
+  minus,
+  times,
+  divide,
 };
 
 class base_ast_node {
@@ -60,6 +69,12 @@ class expression_node : public base_ast_node {
 public:
   std::variant<int, float, std::string> value;
   virtual ~expression_node() = default;
+};
+
+class binary_operator : public base_ast_node {
+public:
+  bin_operators operator_type;
+  virtual ~binary_operator() = default;
 };
 
 class Lang {
@@ -145,25 +160,26 @@ public:
     // statement =  [{ + statement + [statement] + } || <print_statement> ||
     // <variable_declare_assign>] + ";"
     if (inline_tokens.top().value == "{") {
-      inline_tokens.pop();
+      inline_tokens.pop(); // move on to the next token
 
-      if (!parse_statement(parent_node)) {
+      if (!parse_statement(parent_node)) { // if we dont parse a statement go
+                                           // back to intiial state
         stack_collapse();
         return false;
       } else {
         while (inline_tokens.top().value != "}") {
           if (!parse_statement(parent_node)) {
             stack_collapse();
-            return false;
+            return false; // <-recursive stop condition
           }
         }
       }
 
-      if (inline_tokens.top().value != "}") {
-        stack_collapse();
+      if (inline_tokens.top().value != "}") { // if theres only a {
+        stack_collapse();                     // back to initial state
         return false;
       } else {
-        inline_tokens.pop();
+        inline_tokens.pop(); // get rid of it
       }
 
       return true;
@@ -314,7 +330,7 @@ public:
     return true;
   }
 
-  bool parse_expression(base_ast_node *parent, bool recursive_call = false) {
+  bool parse_expression(base_ast_node *parent) {
 
     // expression = [int || string || float || ( + expression + )]
 
@@ -324,6 +340,30 @@ public:
     Token token_next = next_token();
     token_wait_area.push(token_next);
 
+    if (token_next.value == "(") {
+
+      if (!parse_expression(parent)) {
+        stack_collapse();
+        return false;
+      }
+
+      while (inline_tokens.top().value != ")") {
+        if (!parse_expression(parent)) {
+          stack_collapse();
+          return false; // recursive stop condition is this
+        }
+      }
+
+      if (inline_tokens.top().value != ")") {
+        stack_collapse();
+        return false;
+      }
+
+      inline_tokens.pop();
+
+      return true;
+    }
+
     if (token_next.type == token_type::literal) {
 
       potential_child->parent = parent;
@@ -331,12 +371,55 @@ public:
       parent->children.emplace_back(potential_child);
 
       return true;
+    } else {
+      stack_collapse();
+      return false;
     }
 
     potential_child->parent = parent;
     parent->children.emplace_back(potential_child);
 
     return true;
+  }
+
+  bool parse_bin_op(base_ast_node *parent) {
+    binary_operator *potential_child = new binary_operator;
+
+    Token token_next = next_token();
+    inline_tokens.push(token_next);
+
+    if (token_next.value == "+") {
+      potential_child->operator_type = bin_operators::plus;
+      potential_child->parent = parent;
+      parent->children.emplace_back(potential_child);
+
+      inline_tokens.pop(); // get rid of the operator thats on the stack
+      return true;
+    } else if (token_next.value == "-") {
+      potential_child->operator_type = bin_operators::minus;
+      potential_child->parent = parent;
+      parent->children.emplace_back(potential_child);
+
+      inline_tokens.pop(); // get rid of the operator thats on the stack
+      return true;
+    } else if (token_next.value == "*") {
+      potential_child->operator_type = bin_operators::times;
+      potential_child->parent = parent;
+      parent->children.emplace_back(potential_child);
+
+      inline_tokens.pop(); // get rid of the operator thats on the stack
+      return true;
+    } else if (token_next.value == "/") {
+      potential_child->operator_type = bin_operators::divide;
+      potential_child->parent = parent;
+      parent->children.emplace_back(potential_child);
+
+      inline_tokens.pop(); // get rid of the operator thats on the stack
+      return true;
+    }
+
+    stack_collapse();
+    return false;
   }
 };
 
@@ -424,6 +507,7 @@ int main(int argc, char **argv) {
   base_ast_node root;
 
   Lang e(tokens);
+
   bool result = e.parse_program(&root);
 
   if (result) {
