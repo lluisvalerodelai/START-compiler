@@ -65,19 +65,19 @@ std::vector<Token> lexer(const std::string& file_name) {
     // check if its a separator
 
     if (c == '{') {
-      token_list.emplace_back(token_type::separator, "{", token_list.size());
+      token_list.emplace_back(token_type::separator, "{", static_cast<int>(F.tellg()) - 1);
     } else if (c == '}') {
-      token_list.emplace_back(token_type::separator, "}", token_list.size());
+      token_list.emplace_back(token_type::separator, "}", static_cast<int>(F.tellg()) - 1);
     } else if (c == '(') {
-      token_list.emplace_back(token_type::separator, "(", token_list.size());
+      token_list.emplace_back(token_type::separator, "(", static_cast<int>(F.tellg()) - 1);
     } else if (c == ')') {
-      token_list.emplace_back(token_type::separator, ")", token_list.size());
+      token_list.emplace_back(token_type::separator, ")", static_cast<int>(F.tellg()) - 1);
     } else if (c == '[') {
-      token_list.emplace_back(token_type::separator, "[", token_list.size());
+      token_list.emplace_back(token_type::separator, "[", static_cast<int>(F.tellg()) - 1);
     } else if (c == ']') {
-      token_list.emplace_back(token_type::separator, "]", token_list.size());
+      token_list.emplace_back(token_type::separator, "]", static_cast<int>(F.tellg()) - 1);
     } else if (c == ';') {
-      token_list.emplace_back(token_type::separator, ";", token_list.size());
+      token_list.emplace_back(token_type::separator, ";", static_cast<int>(F.tellg()) - 1);
     } else if (c == '=') {
 
       // check if next char is a =, in which case the token is ==
@@ -86,7 +86,7 @@ std::vector<Token> lexer(const std::string& file_name) {
 
       if (next_char == '=') {
         token_list.emplace_back(token_type::operator_token,
-                                "==", token_list.size());
+                                "==", static_cast<int>(F.tellg()) - 1);
 
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
@@ -94,7 +94,7 @@ std::vector<Token> lexer(const std::string& file_name) {
         c = F.get();
       } else {
         token_list.emplace_back(token_type::operator_token, "=",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if (c == '+') {
 
@@ -102,7 +102,7 @@ std::vector<Token> lexer(const std::string& file_name) {
 
       if (next_char == '=') {
         token_list.emplace_back(token_type::operator_token,
-                                "+=", token_list.size());
+                                "+=", static_cast<int>(F.tellg()) - 1);
 
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
@@ -110,14 +110,14 @@ std::vector<Token> lexer(const std::string& file_name) {
         c = F.get();
       } else {
         token_list.emplace_back(token_type::operator_token, "+",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if (c == '-') {
       char next_char = F.peek();
 
       if (next_char == '=') {
         token_list.emplace_back(token_type::operator_token,
-                                "-=", token_list.size());
+                                "-=", static_cast<int>(F.tellg()) - 1);
 
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
@@ -125,14 +125,14 @@ std::vector<Token> lexer(const std::string& file_name) {
         c = F.get();
       } else {
         token_list.emplace_back(token_type::operator_token, "-",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if (c == '*') {
       char next_char = F.peek();
 
       if (next_char == '=') {
         token_list.emplace_back(token_type::operator_token,
-                                "*=", token_list.size());
+                                "*=", static_cast<int>(F.tellg()) - 1);
 
         // move ahead by 2 to get to the next whitespace so we dont read the
         // next = on the next cycle
@@ -140,7 +140,7 @@ std::vector<Token> lexer(const std::string& file_name) {
         c = F.get();
       } else {
         token_list.emplace_back(token_type::operator_token, "*",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if (c == '/') {
       // check if the next one isnt /, in which case add a comment token and go
@@ -153,7 +153,7 @@ std::vector<Token> lexer(const std::string& file_name) {
         std::string commentBuffer;
         std::getline(F, commentBuffer);
         token_list.emplace_back(token_type::comment, commentBuffer,
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       } else if (next_c == '*') // Multiline comment
       {
         std::string multilineCommentBuffer;
@@ -172,11 +172,11 @@ std::vector<Token> lexer(const std::string& file_name) {
         token_list.emplace_back(
             token_type::comment,
             multilineCommentBuffer.substr(0, multilineCommentBuffer.size() - 2),
-            token_list.size());
+            static_cast<int>(F.tellg()) - 1);
       } else {
         // if its none of those, add a / token
         token_list.emplace_back(token_type::operator_token, "/",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
       // check if its a number,
     } else if (c == '<') {
@@ -184,30 +184,30 @@ std::vector<Token> lexer(const std::string& file_name) {
       if (next_c == '=') {
         c = F.get();
         token_list.emplace_back(token_type::operator_token,
-                                "<=", token_list.size());
+                                "<=", static_cast<int>(F.tellg()) - 1);
       } else {
         token_list.emplace_back(token_type::operator_token, "<",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if (c == '>') {
       char next_c = F.peek();
       if (next_c == '=') {
         c = F.get();
         token_list.emplace_back(token_type::operator_token,
-                                ">=", token_list.size());
+                                ">=", static_cast<int>(F.tellg()) - 1);
       } else {
         token_list.emplace_back(token_type::operator_token, ">",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if (c == '!') {
       char next_c = F.peek();
       if (next_c == '=') {
         c = F.get();
         token_list.emplace_back(token_type::operator_token,
-                                "!=", token_list.size());
+                                "!=", static_cast<int>(F.tellg()) - 1);
       } else {
         token_list.emplace_back(token_type::operator_token, "!",
-                                token_list.size());
+                                static_cast<int>(F.tellg()) - 1);
       }
     } else if ((isdigit(c) != 0 || c == '.')) // TODO: This is not doing what we
                                               // want it to do, fix later
@@ -234,7 +234,7 @@ std::vector<Token> lexer(const std::string& file_name) {
       }
 
       token_list.emplace_back(token_type::literal, number,
-                              token_list.size()); // Number literal
+                              static_cast<int>(F.tellg()) - 1); // Number literal
     } else if (c == '"') {
       std::string val;
       c = F.get();
@@ -243,7 +243,7 @@ std::vector<Token> lexer(const std::string& file_name) {
         c = F.get();
       }
       token_list.emplace_back(token_type::literal, val,
-                              token_list.size()); // String literal
+                              static_cast<int>(F.tellg()) - 1); // String literal
     } else {
       std::string buffer = "";
       while (isalnum(c)) {
@@ -262,18 +262,18 @@ std::vector<Token> lexer(const std::string& file_name) {
           buffer == "else" || buffer == "elif" || buffer == "function" ||
           buffer == "returns" || buffer == "print") {
         token_list.emplace_back(token_type::keyword, buffer,
-                                token_list.size()); // Built in keyword
+                                static_cast<int>(F.tellg()) - 1); // Built in keyword
       } else {
         token_list.emplace_back(
             token_type::identifier, buffer,
-            token_list.size()); // User defined variable / type
+            static_cast<int>(F.tellg()) - 1); // User defined variable / type
       }
     }
   }
 
   token_list.emplace_back(
       token_type::END, "END",
-      token_list.size()); // Add end token to indicate end of file
+      static_cast<int>(F.tellg()) - 1); // Add end token to indicate end of file
 
   return token_list;
 }

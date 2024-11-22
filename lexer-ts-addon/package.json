@@ -2,7 +2,7 @@
   "name": "lexer-ts-addon",
   "version": "1.0.0",
   "description": "Makes it possible to call the lexer from typescript code.",
-  "main": "src/main",
+  "main": "./out/lexer_addon.js",
   "private": true,
   "keywords": [],
   "author": "Gergely",
@@ -20,5 +20,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.8.7"
+  },
+  "exports": {
+    ".": {
+      "import": "./out/lexer_addon.js",
+      "require": "./out/lexer_addon.js"
+    }
   }
 }

@@ -5,6 +5,9 @@
     "lib": ["es2020"],
     "outDir": "out",
     "rootDir": "src",
+    "paths": {
+      "lexer-addon/*": ["../lexer-ts-addon/src/*"]
+    },
     "sourceMap": true,
     "incremental": true
   },

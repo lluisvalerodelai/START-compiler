@@ -1,8 +1,8 @@
 import { createWriteStream } from "fs";
 import * as path from "path";
-import { packageRoot } from "./documentUtils";
+import { projectRoot } from "./projectRoot";
 
-const log = createWriteStream(path.join(packageRoot, "log", "serverLog.log"));
+const log = createWriteStream(path.join(projectRoot, "log", "serverLog.log"));
 
 export default {
     write : (message : object | unknown) => {

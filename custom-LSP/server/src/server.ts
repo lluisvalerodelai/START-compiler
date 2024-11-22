@@ -23,7 +23,8 @@ import {
 } from "vscode-languageserver/node";
 
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
-import { getWordAtPosition, packageRoot } from "./methods/documentUtils";
+import { getWordAtPosition } from "./methods/documentUtils";
+import { projectRoot } from "./methods/projectRoot";
 import { join } from "path";
 import { existsSync } from "fs";
 import { URI } from "vscode-uri"
@@ -214,7 +215,7 @@ connection.onDefinition((params: DefinitionParams): LocationLink[] | null => {
 	}
 
 	if (wordInfo.word === 'exampleFunction') {
-		const testDefinitionFile = URI.file(join(packageRoot, "testDefinitionFile.txt")).toString();
+		const testDefinitionFile = URI.file(join(projectRoot, "testDefinitionFile.txt")).toString();
 
 		const testDefinitionRange: Range = {
 			start: { line: 1, character: 0 },

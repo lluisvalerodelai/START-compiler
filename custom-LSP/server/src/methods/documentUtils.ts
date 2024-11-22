@@ -1,9 +1,8 @@
 import { Position, Range } from "vscode-languageserver";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
-import { resolve } from "path";
-
-export const packageRoot = resolve(__dirname, "..", "..", "..");
+import path = require("path");
+import { projectRoot } from "./projectRoot";
 
 export type WordInfo = {
 	word: string,
