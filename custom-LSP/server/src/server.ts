@@ -26,13 +26,15 @@ import {
 } from "vscode-languageserver/node";
 
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
-import { consolePrintPosition, getWordAtPosition } from "./methods/documentUtils";
+import { formatPosition, getWordAtPosition } from "./methods/documentUtils";
 import { projectRoot } from "./methods/projectRoot";
 import { join } from "path";
 import { existsSync } from "fs";
 import { URI } from "vscode-uri"
-import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange, getHoverInfo } from "./methods/tokens";
+import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange, getHoverInfo, characterposToPosition, positionToRange } from "./methods/tokens";
 import { legend, semanticTokensFull } from "./methods/semanticTokenHighlighting";
+import { stringify } from "querystring";
+import log from "./methods/log";
 
 console.log("Server is starting!");
 
@@ -42,6 +44,10 @@ const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
 export const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+export const showEditorMessage = (msg: string): void => {
+	connection.window.showInformationMessage(msg);
+}
 
 // initialize
 connection.onInitialize((params: InitializeParams): InitializeResult => {
@@ -74,7 +80,7 @@ connection.onRequest('textDocument/semanticTokens/full', (params: SemanticTokens
 
 	const sTokens = semanticTokensFull(document);
 
-	
+
 	if (sTokens === null)
 		return { data: [0] };
 
@@ -208,7 +214,7 @@ connection.onHover((params: HoverParams): Hover | null => {
 		hoverToken = docTokens.find(token => isPositionInRange(params.position, token.range, true));
 
 	if (hoverToken === undefined) {
-		connection.window.showWarningMessage(`No token found in file: "${params.textDocument.uri}" at position ${consolePrintPosition(params.position)}`);
+		connection.window.showWarningMessage(`No token found in file: "${params.textDocument.uri}" at position ${formatPosition(params.position)}`);
 		return null;
 	}
 

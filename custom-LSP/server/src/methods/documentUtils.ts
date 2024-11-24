@@ -3,6 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import path = require("path");
 import { projectRoot } from "./projectRoot";
+import { DocumentToken } from "./tokens";
 
 export type WordInfo = {
 	word: string,
@@ -33,9 +34,19 @@ export function getWordAtPosition(document: TextDocument, position: Position): W
 	return null;
 }
 
-export const consolePrintPosition = (position: Position): void => {
+export const formatPosition = (position: Position): string => {
 	position.line += 1;
 	position.character += 1;
 
-	console.log(JSON.stringify(position));
+	return JSON.stringify(position);
+}
+
+export const NULL_POSITION: Position = {
+	line: 0,
+	character: 0
+}
+
+export const EMPTY_RANGE: Range = {
+	start: NULL_POSITION,
+	end: NULL_POSITION
 }

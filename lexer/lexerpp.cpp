@@ -26,7 +26,7 @@ void pretty_print_tokens(std::vector<Token> tokens) {
 }
 
 std::vector<Token> lexer(const std::string& file_name) {
-    std::ifstream F{file_name, std::ifstream::in};
+    std::ifstream F{file_name, std::ifstream::in | std::ifstream::binary};
     // If we can not open the file
     if (F.fail()) {
       std::cerr << "[C++] Error: " << strerror(errno) << std::endl;
@@ -154,12 +154,14 @@ std::vector<Token> lexer(std::basic_istream<Elem, Traits>& F) {
         // line's first char
         std::string commentBuffer;
         std::getline(F, commentBuffer);
-        token_list.emplace_back(token_type::comment, commentBuffer,
-                                static_cast<int>(F.tellg()) - 1);
+
+        token_list.emplace_back(token_type::comment, std::string("//" + commentBuffer),
+                                static_cast<int>(F.tellg()) - 2);
       } else if (next_c == '*') // Multiline comment
       {
         std::string multilineCommentBuffer;
         std::string commentBuffer;
+        multilineCommentBuffer += "/*";
 
         do {
           std::getline(F, commentBuffer);

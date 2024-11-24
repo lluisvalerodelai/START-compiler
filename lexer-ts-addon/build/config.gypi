@@ -427,7 +427,7 @@
     "globalconfig": "C:\\Program Files\\nodejs\\etc\\npmrc",
     "global_prefix": "C:\\Program Files\\nodejs",
     "init_module": "C:\\Users\\gerge\\.npm-init.js",
-    "local_prefix": "D:\\Programming_ws\\VSC_Extensions\\my_lsp_test_ws\\START-compiler\\lexer-ts-addon",
+    "local_prefix": "D:\\Programming_ws\\VSC_Extensions\\my_lsp_test_ws\\START-compiler\\custom-LSP\\server",
     "node_gyp": "C:\\Users\\gerge\\AppData\\Roaming\\nvm\\v20.17.0\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js",
     "npm_version": "10.8.2",
     "prefix": "C:\\Program Files\\nodejs",

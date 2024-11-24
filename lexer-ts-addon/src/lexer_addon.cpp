@@ -24,7 +24,7 @@ static Napi::Value CreateTokenArray(const Napi::CallbackInfo& info) {
 	// 	Token{token_type::END, "Last token", 101}
 	// };
 
-	std::istringstream content(info[0].As<Napi::String>());
+	std::istringstream content(info[0].As<Napi::String>(), std::istringstream::in | std::istringstream::binary);
 
 	const std::vector<Token>& cpparray = lexer(content);
 

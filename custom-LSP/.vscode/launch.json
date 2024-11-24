@@ -10,9 +10,9 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}"
       ],
-      "outFiles": [
-        "${workspaceRoot}/client/out/**/*.js"
-      ],
+      // "outFiles": [
+      //   "${workspaceRoot}/client/out/**/*.js"
+      // ],
       "preLaunchTask": {
         "type": "npm",
         "script": "watch"
@@ -22,30 +22,30 @@
         "DEBUG_SERVER_PORT": "9229"
       }
     },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Server",
-      "program": "${workspaceRoot}/server/out/server.js",
-      "args": [
-        "--stdio"
-      ],
-      "runtimeArgs": [
-        "--inspect=9229"
-      ],
-      "cwd": "${workspaceRoot}",
-      "outFiles": [
-        "${workspaceRoot}/server/out/**/*.js"
-      ],
-      "preLaunchTask": {
-        "type": "npm",
-        "script": "watch"
-      },
-      "sourceMaps": true,
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "trace": true
-    }
+    // {
+    //   "type": "node",
+    //   "request": "launch",
+    //   "name": "Launch Server",
+    //   "program": "${workspaceRoot}/server/out/server.js",
+    //   "args": [
+    //     "--stdio"
+    //   ],
+    //   "runtimeArgs": [
+    //     "--inspect=9229"
+    //   ],
+    //   "cwd": "${workspaceRoot}",
+    //   "outFiles": [
+    //     "${workspaceRoot}/server/out/**/*.js"
+    //   ],
+    //   "preLaunchTask": {
+    //     "type": "npm",
+    //     "script": "watch"
+    //   },
+    //   "sourceMaps": true,
+    //   "skipFiles": [
+    //     "<node_internals>/**"
+    //   ],
+    //   "trace": true
+    // }
   ]
 }

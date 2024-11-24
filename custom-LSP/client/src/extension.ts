@@ -8,6 +8,8 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 
+console.log("Client has started!");
+
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
