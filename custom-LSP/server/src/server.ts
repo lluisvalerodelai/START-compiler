@@ -22,6 +22,7 @@ import {
 	combineWindowFeatures,
 	SemanticTokensParams,
 	SemanticTokens,
+	MarkupContent,
 } from "vscode-languageserver/node";
 
 import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
@@ -30,7 +31,7 @@ import { projectRoot } from "./methods/projectRoot";
 import { join } from "path";
 import { existsSync } from "fs";
 import { URI } from "vscode-uri"
-import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange } from "./methods/tokens";
+import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange, getHoverInfo } from "./methods/tokens";
 import { legend, semanticTokensFull } from "./methods/semanticTokenHighlighting";
 
 console.log("Server is starting!");
@@ -212,11 +213,7 @@ connection.onHover((params: HoverParams): Hover | null => {
 	}
 
 	return {
-		contents: {
-			kind: MarkupKind.Markdown,
-			value: hoverToken.value,
-			language: "Custom Lang"
-		},
+		contents: getHoverInfo(params, hoverToken),
 		range: hoverToken.range
 	}
 });

@@ -1,6 +1,6 @@
 import { lexer, Token, token_type } from "lexer-ts-addon";
 import path = require("path");
-import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver";
+import { Diagnostic, DiagnosticSeverity, HoverParams, MarkupContent, MarkupKind } from "vscode-languageserver";
 import { TextDocument, Position, Range } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
 
@@ -9,6 +9,8 @@ export type DocumentToken = {
 	value: string;
 	range: Range;
 }
+
+export const typeToString = (type: token_type): string => { return token_type[type] };
 
 export const getPath = (textDocument: TextDocument): string => {
 	return URI.parse(textDocument.uri).fsPath;
@@ -24,7 +26,7 @@ export const PrintSourceTokens = (docTokens: Token[]): void => {
 	const printTokenObjects: Object[] = [];
 
 	docTokens.forEach(token => {
-		printTokenObjects.push({ type: token_type[token.type], value: token.value, characterPosition: token.characterPosition });
+		printTokenObjects.push({ type: typeToString(token.type), value: token.value, characterPosition: token.characterPosition });
 	});
 
 	console.log(printTokenObjects);
@@ -36,7 +38,7 @@ export const PrintDocumentTokens = (docTokens: DocumentToken[]): void => {
 	const printTokenObjects: Object[] = [];
 
 	docTokens.forEach(token => {
-		printTokenObjects.push({ type: token_type[token.type], value: token.value, range: JSON.stringify(token.range) });
+		printTokenObjects.push({ type: typeToString(token.type), value: token.value, range: JSON.stringify(token.range) });
 	});
 
 	console.log(printTokenObjects);
@@ -124,4 +126,14 @@ export const validateTokens = (textDocument: TextDocument): Diagnostic[] => {
 	// Generate diagnostics based on the tokens
 
 	return diagnostics;
+}
+
+export const getHoverInfo = (params: HoverParams, token: DocumentToken): MarkupContent => {
+	// This is the markdown that's going to be shown
+	const markupContent: MarkupContent = {
+		kind: MarkupKind.Markdown,
+		value: `**${token.value}**: *${typeToString(token.type)}*`
+	}
+
+	return markupContent;
 }
