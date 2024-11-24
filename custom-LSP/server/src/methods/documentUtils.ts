@@ -32,3 +32,10 @@ export function getWordAtPosition(document: TextDocument, position: Position): W
 
 	return null;
 }
+
+export const consolePrintPosition = (position: Position): void => {
+	position.line += 1;
+	position.character += 1;
+
+	console.log(JSON.stringify(position));
+}

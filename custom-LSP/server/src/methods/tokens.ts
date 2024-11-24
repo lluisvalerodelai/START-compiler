@@ -15,7 +15,8 @@ export const getPath = (textDocument: TextDocument): string => {
 }
 
 /**
- * Document path -> Tokens
+ * Key: textDocument.uri
+ * Value: DocumentToken[]
  */
 export const tokens: Map<string, DocumentToken[]> = new Map<string, DocumentToken[]>();
 
@@ -23,7 +24,7 @@ export const PrintSourceTokens = (docTokens: Token[]): void => {
 	const printTokenObjects: Object[] = [];
 
 	docTokens.forEach(token => {
-		printTokenObjects.push({type: token_type[token.type], value: token.value, characterPosition: token.characterPosition});
+		printTokenObjects.push({ type: token_type[token.type], value: token.value, characterPosition: token.characterPosition });
 	});
 
 	console.log(printTokenObjects);
@@ -35,7 +36,7 @@ export const PrintDocumentTokens = (docTokens: DocumentToken[]): void => {
 	const printTokenObjects: Object[] = [];
 
 	docTokens.forEach(token => {
-		printTokenObjects.push({type: token_type[token.type], value: token.value, range: JSON.stringify(token.range)});
+		printTokenObjects.push({ type: token_type[token.type], value: token.value, range: JSON.stringify(token.range) });
 	});
 
 	console.log(printTokenObjects);
@@ -72,6 +73,19 @@ export const tokenToRange = (textDocument: TextDocument, token: Token): Range =>
 		start: characterposToPosition(textDocument, tokenStart),
 		end: characterposToPosition(textDocument, token.characterPosition)
 	}
+}
+
+export const isPositionInRange = (position: Position, range: Range, extended: boolean = false): boolean => {
+	if (position.line < range.start.line || position.line > range.end.line)
+		return false;
+
+	if (position.line === range.start.line && position.character < range.start.character)
+		return false;
+
+	if (position.line === range.end.line && position.character > range.end.character + Number(extended))
+		return false;
+
+	return true;
 }
 
 export const convertToDocumentTokens = (textDocument: TextDocument, tokens: Token[]): DocumentToken[] => {

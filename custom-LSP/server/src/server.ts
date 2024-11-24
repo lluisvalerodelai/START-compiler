@@ -24,13 +24,13 @@ import {
 	SemanticTokens,
 } from "vscode-languageserver/node";
 
-import { Range, TextDocument } from "vscode-languageserver-textdocument";
-import { getWordAtPosition } from "./methods/documentUtils";
+import { Position, Range, TextDocument } from "vscode-languageserver-textdocument";
+import { consolePrintPosition, getWordAtPosition } from "./methods/documentUtils";
 import { projectRoot } from "./methods/projectRoot";
 import { join } from "path";
 import { existsSync } from "fs";
 import { URI } from "vscode-uri"
-import { tokens, fetchTokens, validateTokens } from "./methods/tokens";
+import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange } from "./methods/tokens";
 import { legend, semanticTokensFull } from "./methods/semanticTokenHighlighting";
 
 console.log("Server is starting!");
@@ -191,48 +191,34 @@ function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
 
 // Mouse hovers over or ctrl+k,ctrl+i
 connection.onHover((params: HoverParams): Hover | null => {
-	const document = documents.get(params.textDocument.uri);
+	// Implement your hover logic here
+	// Test1: Show current token
+	const docTokens: DocumentToken[] | undefined = tokens.get(params.textDocument.uri);
 
-	if (!document) {
-		connection.window.showWarningMessage(`Could not open document ${params.textDocument.uri}...`);
+	if (docTokens === undefined) {
+		connection.window.showWarningMessage(`No tokens found associated with: ${params.textDocument.uri}`);
 		return null;
 	}
 
-	const position = params.position;
+	// Find the token we are hovering over
+	let hoverToken: DocumentToken | undefined = docTokens.find(token => isPositionInRange(params.position, token.range));
+	// If we havent found any token at position, do an "extended" search
+	if (hoverToken === undefined)
+		hoverToken = docTokens.find(token => isPositionInRange(params.position, token.range, true));
 
-	// Implement your hover logic here
-	// Example:
-	const wordInfo = getWordAtPosition(document, position);
-
-	if (!wordInfo) {
-		connection.window.showWarningMessage(`Could not find the symbol hovered over at position (line: ${params.position.line}, character: ${params.position.character}...`);
-
-		return {
-			contents: {
-				kind: MarkupKind.Markdown,
-				value: 'Hover is empty'
-			}
-		};
+	if (hoverToken === undefined) {
+		connection.window.showWarningMessage(`No token found in file: "${params.textDocument.uri}" at position ${consolePrintPosition(params.position)}`);
+		return null;
 	}
 
-	if (wordInfo.word === 'TypeScript') {
-		return {
-			contents: {
-				kind: MarkupKind.Markdown,
-				value: '**TypeScript** is a typed superset of JavaScript that compiles to plain JavaScript.'
-			}
-		};
+	return {
+		contents: {
+			kind: MarkupKind.Markdown,
+			value: hoverToken.value,
+			language: "Custom Lang"
+		},
+		range: hoverToken.range
 	}
-	else {
-		return {
-			contents: {
-				kind: MarkupKind.Markdown,
-				value: 'No hover definition found'
-			}
-		};
-	}
-
-	return null;
 });
 
 
