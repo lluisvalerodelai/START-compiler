@@ -24,7 +24,6 @@ export const PrintSourceTokens = (docTokens: Token[]): void => {
 
 	docTokens.forEach(token => {
 		printTokenObjects.push({type: token_type[token.type], value: token.value, characterPosition: token.characterPosition});
-		//console.log(`Token { type: ${token_type[token.type]}, value: ${token.value}, range: ${token.range} }`)
 	});
 
 	console.log(printTokenObjects);
@@ -37,7 +36,6 @@ export const PrintDocumentTokens = (docTokens: DocumentToken[]): void => {
 
 	docTokens.forEach(token => {
 		printTokenObjects.push({type: token_type[token.type], value: token.value, range: JSON.stringify(token.range)});
-		//console.log(`Token { type: ${token_type[token.type]}, value: ${token.value}, range: ${token.range} }`)
 	});
 
 	console.log(printTokenObjects);

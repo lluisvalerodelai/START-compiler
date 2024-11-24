@@ -5,15 +5,14 @@ import { projectRoot } from "./methods/projectRoot";
 import { convertToDocumentTokens, PrintDocumentTokens, PrintSourceTokens } from "./methods/tokens";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
-import fs = require("fs");
 
-const testPath = path.join(projectRoot, "..", "lexer", "tests", "valid", "test.c");
-console.log("Path: ", testPath);
+const content = "int main() {\n  int helloWorld = 4;\n  string svar = \"hello!!!\";\n  \n  float fval = 100101110 * 1001;\n\n  return helloWorld;\n}";
 
-const testtextDoc = TextDocument.create(URI.file(testPath).fsPath, "languageIs", 0.1, fs.readFileSync(testPath).toString());
+const testtextDoc = TextDocument.create(URI.file(path.resolve("./testSource")).fsPath, "languageId", 0.1, content);
 
-const result: Token[] = lexer("int main() {\n  int hello_world = 4;\n  string e = \"hello!!!\";\n\n  return 0;\n}");
-//console.log("Results: ", result);
+const result: Token[] = lexer(content);
+//console.log("Source tokens:")
+//PrintSourceTokens(result);
 
 const docToken = convertToDocumentTokens(testtextDoc, result);
 PrintDocumentTokens(docToken);

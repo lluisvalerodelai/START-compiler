@@ -239,11 +239,13 @@ std::vector<Token> lexer(std::basic_istream<Elem, Traits>& F) {
                               static_cast<int>(F.tellg()) - 1); // Number literal
     } else if (c == '"') {
       std::string val;
+      val += '"';
       c = F.get();
       while (c != '"') {
         val += c;
         c = F.get();
       }
+      val += '"';
       token_list.emplace_back(token_type::literal, val,
                               static_cast<int>(F.tellg()) - 1); // String literal
     } else {
