@@ -17,5 +17,21 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.81.0"
+  },
+  "contributes": {
+    "semanticTokenTypes": [
+      {
+        "id": "TestID",
+        "superType": "keyword",
+        "description": "TestDESCRIPTION"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "TestID": ["keyword.control"]
+        }
+      }
+    ]
   }
 }

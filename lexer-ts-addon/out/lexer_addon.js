@@ -12,8 +12,13 @@ var token_type;
     token_type[token_type["END"] = 5] = "END";
     token_type[token_type["comment"] = 6] = "comment";
 })(token_type || (exports.token_type = token_type = {}));
-const lexer = (file_name) => {
-    const result = binding.CreateTokenArray(file_name);
+/**
+ *
+ * @param file_content The content of the file which should be parsed
+ * @returns Array of tokens found in the content
+ */
+const lexer = (file_content) => {
+    const result = binding.CreateTokenArray(file_content);
     return result.map(obj => {
         // Ensure the type is valid in the enum
         if (!(obj.type in token_type)) {

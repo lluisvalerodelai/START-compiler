@@ -26,24 +26,26 @@ void pretty_print_tokens(std::vector<Token> tokens) {
 }
 
 std::vector<Token> lexer(const std::string& file_name) {
+    std::ifstream F{file_name, std::ifstream::in};
+    // If we can not open the file
+    if (F.fail()) {
+      std::cerr << "[C++] Error: " << strerror(errno) << std::endl;
+      return std::vector<Token>{};
+    }
 
-  std::ifstream F{file_name, std::ifstream::in};
-  // If we can not open the file
-  if (F.fail()) {
-    std::cerr << "[C++] Error: " << strerror(errno) << std::endl;
-    return std::vector<Token>{};
-  }
+    return lexer(F);
+}
 
+template <class Elem, class Traits>
+std::vector<Token> lexer(std::basic_istream<Elem, Traits>& F) {
   char c;
   bool are_checking_string = false;
 
   std::vector<Token> token_list;
   token_list.reserve(100);
+
   // main loop
-
-  while (!F.eof()) {
-    c = F.get();
-
+  while (c = F.get(), c >= 0) {
     // check if its a skippable char
     if (!are_checking_string) {
       switch (c) {

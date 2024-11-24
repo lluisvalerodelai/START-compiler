@@ -1,0 +1,5 @@
+program = <statement> + [statement + ...]
+statement = [("print" + <literal>) || (<type> + identifier + "=" + <literal>)]
+literal = integer || string || float 
+type = "int" || "string" || "float"
+

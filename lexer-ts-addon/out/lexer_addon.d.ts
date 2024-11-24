@@ -12,4 +12,9 @@ export type Token = {
     value: string;
     characterPosition: number;
 };
-export declare const lexer: (file_name: string) => Token[];
+/**
+ *
+ * @param file_content The content of the file which should be parsed
+ * @returns Array of tokens found in the content
+ */
+export declare const lexer: (file_content: string) => Token[];

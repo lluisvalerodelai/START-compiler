@@ -1,6 +1,8 @@
 #include <napi.h>
 #include "../../lexer/lexerpp.cpp"  // Include your lexer implementation
 
+#include <sstream>
+
 static Napi::Value CreateTokenArray(const Napi::CallbackInfo& info) {
 	// We only need 1 argument
 	if (info.Length() != 1) {
@@ -22,7 +24,9 @@ static Napi::Value CreateTokenArray(const Napi::CallbackInfo& info) {
 	// 	Token{token_type::END, "Last token", 101}
 	// };
 
-	const std::vector<Token>& cpparray = lexer(info[0].As<Napi::String>());
+	std::istringstream content(info[0].As<Napi::String>());
+
+	const std::vector<Token>& cpparray = lexer(content);
 
 	// Return this c++ vector as a javasrcipt one
 	Napi::Array jsarray = Napi::Array::New(info.Env(), cpparray.size());

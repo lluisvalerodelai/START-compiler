@@ -22,8 +22,13 @@ export type Token = {
 	characterPosition: number
 };
 
-export const lexer = (file_name: string): Token[] => {
-	const result = binding.CreateTokenArray(file_name) as ObjectToken[];
+/**
+ * 
+ * @param file_content The content of the file which should be parsed
+ * @returns Array of tokens found in the content
+ */
+export const lexer = (file_content: string): Token[] => {
+	const result = binding.CreateTokenArray(file_content) as ObjectToken[];
 
 	return result.map(obj => {
         // Ensure the type is valid in the enum

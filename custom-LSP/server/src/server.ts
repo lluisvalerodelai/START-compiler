@@ -20,6 +20,8 @@ import {
 	Definition,
 	LocationLink,
 	combineWindowFeatures,
+	SemanticTokensParams,
+	SemanticTokens,
 } from "vscode-languageserver/node";
 
 import { Range, TextDocument } from "vscode-languageserver-textdocument";
@@ -28,13 +30,17 @@ import { projectRoot } from "./methods/projectRoot";
 import { join } from "path";
 import { existsSync } from "fs";
 import { URI } from "vscode-uri"
+import { tokens, fetchTokens, validateTokens } from "./methods/tokens";
+import { legend, semanticTokensFull } from "./methods/semanticTokenHighlighting";
+
+console.log("Server is starting!");
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
-const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+export const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 // initialize
 connection.onInitialize((params: InitializeParams): InitializeResult => {
@@ -48,10 +54,30 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 			},
 			hoverProvider: true,
 			definitionProvider: true,
+			semanticTokensProvider: {
+				full: true,
+				legend: legend
+			}
 		},
 	};
 
 	return result;
+});
+
+// Provides token highlighting
+connection.onRequest('textDocument/semanticTokens/full', (params: SemanticTokensParams): SemanticTokens => {
+	const document = documents.get(params.textDocument.uri);
+
+	if (document === undefined)
+		return { data: [0] };
+
+	const sTokens = semanticTokensFull(document);
+
+	
+	if (sTokens === null)
+		return { data: [0] };
+
+	return sTokens;
 });
 
 // textDocument/completion
@@ -113,10 +139,24 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
 });
 
 documents.onDidChangeContent((change) => {
-	validateTextDocument(change.document);
+	const textDocument: TextDocument = change.document;
+
+	fetchTokens(textDocument);
+
+	const diagnostics: Diagnostic[] = [];
+
+	// Gather errors from different sources
+	diagnostics.push(...validateTokens(textDocument));
+
+	diagnostics.push(...validateTextDocument(textDocument));
+
+	//connection.sendNotification("workspace/semanticTokens/refresh")
+
+	// Submit all found errors to the client
+	connection.sendDiagnostics({ uri: textDocument.uri, version: textDocument.version, diagnostics: diagnostics });
 });
 
-function validateTextDocument(textDocument: TextDocument): void {
+function validateTextDocument(textDocument: TextDocument): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	// Implement your diagnostic logic here
 	// Example:
@@ -146,7 +186,7 @@ function validateTextDocument(textDocument: TextDocument): void {
 		});
 	}
 
-	connection.sendDiagnostics({ uri: textDocument.uri, version: textDocument.version, diagnostics: diagnostics });
+	return diagnostics;
 }
 
 // Mouse hovers over or ctrl+k,ctrl+i
