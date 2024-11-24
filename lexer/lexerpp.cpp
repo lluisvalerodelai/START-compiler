@@ -159,23 +159,28 @@ std::vector<Token> lexer(std::basic_istream<Elem, Traits>& F) {
                                 static_cast<int>(F.tellg()) - 2);
       } else if (next_c == '*') // Multiline comment
       {
-        std::string multilineCommentBuffer;
-        std::string commentBuffer;
-        multilineCommentBuffer += "/*";
+        std::string commentBuffer("/*");
 
-        do {
-          std::getline(F, commentBuffer);
-          multilineCommentBuffer += commentBuffer + "\n";
+        while (true) {
+          c = F.get();
 
-          // The multiline comment stops once we hit a */ NOTE: We are expecting
-          // that no character will follow after */ in the same line!
-        } while (commentBuffer.size() >= 2 &&
-                 commentBuffer[commentBuffer.size() - 2] == '*' &&
-                 commentBuffer.back() == '/');
+          // Look for ending
+          if (c == '*') {
+            next_c = F.peek();
+            
+            if (next_c == '/') {
+              F.get();
+              commentBuffer += "*/";
+              break;
+            }
+          }
+
+          commentBuffer += c;
+        }
 
         token_list.emplace_back(
             token_type::comment,
-            multilineCommentBuffer.substr(0, multilineCommentBuffer.size() - 2),
+            commentBuffer,
             static_cast<int>(F.tellg()) - 1);
       } else {
         // if its none of those, add a / token
