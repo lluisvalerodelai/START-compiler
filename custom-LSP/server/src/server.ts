@@ -31,7 +31,7 @@ import { projectRoot } from "./methods/projectRoot";
 import { join } from "path";
 import { existsSync } from "fs";
 import { URI } from "vscode-uri"
-import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange, getHoverInfo, characterposToPosition, positionToRange } from "./methods/tokens";
+import { tokens, fetchTokens, validateTokens, DocumentToken, isPositionInRange, getHoverInfo, characterposToPosition, positionToRange, DocumentTokenDocumentation, identifierTokenDefinitions, getDefinitionInfo } from "./methods/tokens";
 import { legend, semanticTokensFull } from "./methods/semanticTokenHighlighting";
 import { stringify } from "querystring";
 import log from "./methods/log";
@@ -226,45 +226,25 @@ connection.onHover((params: HoverParams): Hover | null => {
 
 
 connection.onDefinition((params: DefinitionParams): LocationLink[] | null => {
-	const document = documents.get(params.textDocument.uri);
+	const docTokens: DocumentToken[] | undefined = tokens.get(params.textDocument.uri);
 
-	if (!document) {
-		connection.window.showWarningMessage(`Could not open document ${params.textDocument.uri}...`);
+	if (docTokens === undefined) {
+		connection.window.showWarningMessage(`No tokens found associated with: ${params.textDocument.uri}`);
 		return null;
 	}
 
-	const position = params.position;
-	// Implement your jump to definition logic here
-	// Example:
-	const wordInfo = getWordAtPosition(document, position);
+	// Find the token we are requesting definition for
+	let definitionToken: DocumentToken | undefined = docTokens.find(token => isPositionInRange(params.position, token.range));
+	// If we havent found any token at position, do an "extended" search
+	if (definitionToken === undefined)
+		definitionToken = docTokens.find(token => isPositionInRange(params.position, token.range, true));
 
-	if (!wordInfo) {
-		connection.window.showWarningMessage(`Could not find the symbol which requested definition at position (line: ${params.position.line}, character: ${params.position.character}...`);
+	if (definitionToken === undefined) {
+		connection.window.showWarningMessage(`No token found in file: "${params.textDocument.uri}" at position ${formatPosition(params.position)}`);
 		return null;
 	}
 
-	if (wordInfo.word === 'exampleFunction') {
-		const testDefinitionFile = URI.file(join(projectRoot, "testDefinitionFile.txt")).toString();
-
-		const testDefinitionRange: Range = {
-			start: { line: 1, character: 0 },
-			end: { line: 2, character: 5 }
-		};
-
-		if (existsSync(testDefinitionFile)) {
-			connection.window.showInformationMessage(`Found definition file: ${testDefinitionFile}`);
-		}
-
-		return [{
-			originSelectionRange: wordInfo.range, // Range of the symbol (in original file) which was clicked on
-			targetUri: testDefinitionFile, // In which document the definition is
-			targetRange: testDefinitionRange, // Full range of definition of the symbol in targetUri, contains: comments, symbol definition
-			targetSelectionRange: testDefinitionRange // A more precise range within the targetRange that pinpoints the defined symbol.
-		}];
-	}
-
-	connection.window.showWarningMessage(`Could not find any definition for \"${wordInfo.word}\"`);
-	return null;
+	return getDefinitionInfo(params, definitionToken);
 });
 
 // Make the text document manager listen on the connection

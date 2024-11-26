@@ -1,6 +1,6 @@
 import { lexer, Token, token_type } from "lexer-ts-addon";
 import path = require("path");
-import { Diagnostic, DiagnosticSeverity, HoverParams, MarkupContent, MarkupKind } from "vscode-languageserver";
+import { DefinitionParams, Diagnostic, DiagnosticSeverity, HoverParams, LocationLink, MarkupContent, MarkupKind } from "vscode-languageserver";
 import { TextDocument, Position, Range } from "vscode-languageserver-textdocument";
 import { URI } from "vscode-uri";
 import { documents, showEditorMessage } from "../server";
@@ -230,4 +230,35 @@ export const getHoverInfo = (params: HoverParams, token: DocumentToken): MarkupC
 	}
 
 	return markupContent;
+}
+
+const defaultLocationLink = (uri: string, token: DocumentToken): LocationLink => {
+	return LocationLink.create(uri, token.range, token.range, token.range);
+}
+const definitionRangeFull = (token: DocumentTokenDocumentation): Range => {
+	return {
+		start: token.doc.range.start,
+		end: token.range.end
+	}
+}
+
+export const getDefinitionInfo = (params: DefinitionParams, token: DocumentToken): LocationLink[] => {
+	const returnIfUndefined = [defaultLocationLink(params.textDocument.uri, token)];
+	const document = documents.get(params.textDocument.uri);
+	if (document === undefined)
+		return returnIfUndefined;
+
+	const identifierDefinitions: DocumentTokenDocumentation[] | undefined = identifierTokenDefinitions.get(params.textDocument.uri);
+	if (identifierDefinitions === undefined)
+		return returnIfUndefined;
+
+	const definition: DocumentTokenDocumentation | undefined = identifierDefinitions.find(def => def.value === token.value);
+	if (definition === undefined)
+		return returnIfUndefined;
+
+	// targetUri: In which document the definition is
+	// targetRange: Full range of definition of the symbol in targetUri, contains: comments, symbol definition
+	// targetSelectionRange: A more precise range within the targetRange that pinpoints the defined symbol.
+	// originSelectionRange?: Range of the symbol (in original file) which was clicked on
+	return [LocationLink.create(params.textDocument.uri, definitionRangeFull(definition), definition.range, token.range)];
 }
