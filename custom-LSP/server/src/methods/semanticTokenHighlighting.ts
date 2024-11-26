@@ -5,7 +5,7 @@ import {
 	SemanticTokenTypes,
 	TextDocumentIdentifier,
 } from 'vscode-languageserver/node';
-import { documents } from "../server"
+import { documents, showEditorMessage } from "../server"
 import { DocumentToken, getPath, tokens } from './tokens';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { token_type } from 'lexer-ts-addon';
@@ -52,11 +52,19 @@ export const mapTokenType = (documentToken: DocumentToken): SemanticTokenTypes =
 }
 
 export const semanticTokensFull = (textDocument: TextDocument): SemanticTokens | null => {
+	const document: TextDocument | undefined = documents.get(textDocument.uri);
+	if (document === undefined) {
+		showEditorMessage(`Trouble opening document ${textDocument.uri}}`);
+		return null;
+	}
+	const lines = document.getText().split("\n");
+
 	const builder = new SemanticTokensBuilder();
 
 	const docTokens = tokens.get(textDocument.uri);
 
 	if (docTokens === undefined) {
+		showEditorMessage(`No teokens found in document ${textDocument.uri}}`);
 		return null;
 	}
 
@@ -67,13 +75,31 @@ export const semanticTokensFull = (textDocument: TextDocument): SemanticTokens |
 		const tokenType = mapTokenType(token);
 		const tokenTypeIndex = legendTokenTypes.indexOf(tokenType);
 
-		builder.push(
-			token.range.start.line, // Each token only spans at most 1 line
-			token.range.start.character,
-			token.value.length,
-			tokenTypeIndex,
-			0
-		);
+		// If the token spans multiple lines, we have to build it line by line
+		if (token.range.start.line === token.range.end.line) {
+			builder.push(
+				token.range.start.line, // Each token only spans at most 1 line
+				token.range.start.character,
+				token.value.length,
+				tokenTypeIndex,
+				0
+			);
+		}
+		else {
+			const tokenLines = token.value.split("\n");
+			// First line
+			//12345
+			const startTokenLen = lines[token.range.start.line].length - token.range.start.character;
+			builder.push(token.range.start.line, token.range.start.character, startTokenLen, tokenTypeIndex, 0);
+			// Middle lines
+			for (let i: number = 1; i < tokenLines.length - 1; i++) {
+				const tokenLen = lines[token.range.start.line + i].length;
+				builder.push(token.range.start.line + i, 0, tokenLen, tokenTypeIndex, 0);
+			}
+			// Last line
+			builder.push(token.range.end.line, 0, token.range.end.character + 1, tokenTypeIndex, 0);
+		}
+
 	}
 
 	return builder.build();
