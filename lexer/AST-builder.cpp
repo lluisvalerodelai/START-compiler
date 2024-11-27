@@ -1,23 +1,12 @@
 #include "lexerpp.hpp"
 #include <cmath>
 #include <cstdio>
-#include <execution>
 #include <iostream>
-#include <iterator>
 #include <stack>
 #include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
-
-enum AST_node_type {
-  program_node,
-  print,
-  declare_and_assign,
-  expression,
-  identifier_name,
-  type_identifier,
-};
 
 enum variable_types {
   int_type,
@@ -36,7 +25,7 @@ class base_ast_node {
 public:
   base_ast_node *parent = nullptr;
   std::vector<base_ast_node *> children;
-  AST_node_type node_type; // temporary until hierarchy is added
+  std::string node_identifier;
 
   void set_parent(base_ast_node *parent_to_set) { parent = parent_to_set; }
 
@@ -47,63 +36,35 @@ public:
   virtual ~base_ast_node() = default;
 };
 
-class identifier_node : public base_ast_node {
-public:
-  std::string value;
-
-  void set_value(std::string identifier_name) { value = identifier_name; }
-
-  virtual ~identifier_node() = default;
-};
-
-class type_identifier_node : public base_ast_node {
-public:
-  variable_types type;
-
-  void set_value(variable_types t) { type = t; }
-
-  virtual ~type_identifier_node() = default;
-};
-
-class expression_node : public base_ast_node {
-public:
-  std::variant<int, float, std::string> value;
-  virtual ~expression_node() = default;
-};
-
-class binary_operator : public base_ast_node {
-public:
-  bin_operators operator_type;
-  virtual ~binary_operator() = default;
-};
-
 class Lang {
 public:
   std::vector<Token> tokens;
   int line_nr = 0;
   bool buffer_occupied = false;
-  std::stack<Token> token_wait_area;
-  std::stack<Token> inline_tokens;
+  std::stack<Token> top_stack;
+  std::stack<Token> bottom_stack;
   std::vector<std::string> errors;
 
   Lang(std::vector<Token> toks) {
     toks.erase(toks.end() - 2);
     for (int i = toks.size() - 1; i >= 0; i--) {
-      inline_tokens.push(toks[i]);
+      bottom_stack.push(toks[i]);
     }
   }
 
+  // move everything from the top stack onto the bottom stack
   void stack_collapse() {
-    while (!token_wait_area.empty()) {
-      Token top_token = token_wait_area.top();
-      token_wait_area.pop();
-      inline_tokens.push(top_token);
+    while (!top_stack.empty()) {
+      Token top_token = top_stack.top();
+      top_stack.pop();
+      bottom_stack.push(top_token);
     }
   }
 
-  void clear_stack() {
-    while (!token_wait_area.empty()) {
-      token_wait_area.pop();
+  // empty the top stack
+  void clear_top_stack() {
+    while (!top_stack.empty()) {
+      top_stack.pop();
     }
   }
 
@@ -113,40 +74,28 @@ public:
   }
 
   Token next_token() {
-    if (inline_tokens.empty()) {
+    if (bottom_stack.empty()) {
       throw std::runtime_error("inline_tokens are empty");
     }
 
-    Token top_token = inline_tokens.top();
-    inline_tokens.pop();
+    Token top_token = bottom_stack.top();
+    bottom_stack.pop();
     return top_token;
   };
 
-  void print_inline_tokens() {
-    std::cout << "wait area tokens: \n";
-
-    while (!token_wait_area.empty()) {
-      std::cout << token_wait_area.top().value << ", ";
-      token_wait_area.pop();
-    }
-
-    std::cout << " \n inline tokens: \n";
-    while (!inline_tokens.empty()) {
-      std::cout << inline_tokens.top().value << ", ";
-      inline_tokens.pop();
-    }
-
-    std::cout << std::endl;
-  }
-
   bool parse_program(base_ast_node *program_node) {
-    program_node->node_type = AST_node_type::program_node;
 
+    // program = <statement> + [statement + ...]
+
+    program_node->node_identifier = "program_node";
+
+    // try to parse the first statement
     if (!parse_statement(program_node)) {
       return false;
     }
 
-    while (inline_tokens.top().value != "END") {
+    // keep parsing till we reach the end
+    while (bottom_stack.top().value != "END") {
       if (!parse_statement(program_node)) {
         return false;
       }
@@ -155,335 +104,52 @@ public:
     return true;
   }
 
-  bool parse_statement(base_ast_node *parent_node) {
+  bool parse_statement(base_ast_node *parent) {
 
-    // statement =  [{ + statement + [statement] + } || <print_statement> ||
-    // <variable_declare_assign>] + ";"
-    if (inline_tokens.top().value == "{") {
-      inline_tokens.pop(); // move on to the next token
-
-      if (!parse_statement(parent_node)) { // if we dont parse a statement go
-                                           // back to intiial state
-        stack_collapse();
-        return false;
-      } else {
-        while (inline_tokens.top().value != "}") {
-          if (!parse_statement(parent_node)) {
-            stack_collapse();
-            return false; // <-recursive stop condition
-          }
-        }
-      }
-
-      if (inline_tokens.top().value != "}") { // if theres only a {
-        stack_collapse();                     // back to initial state
-        return false;
-      } else {
-        inline_tokens.pop(); // get rid of it
-      }
-
-      return true;
-    }
-
-    if (!parse_dec_ass(parent_node) && !parse_print_statement(parent_node)) {
+    if (!parse_print_statement(parent) && !parse_var_dec_ass(parent)) {
       return false;
     }
-    if (!parse_semicolon()) {
-      return false;
-    }
-    clear_stack(); // need to clear stack again after checking for semicolon
-                   // since we dont take care of it in previous functs
 
     return true;
   }
 
-  bool parse_semicolon() {
-    Token token_next = next_token();
-    token_wait_area.push(token_next);
-    if (token_next.value != ";") {
-      stack_collapse();
-      return false;
-    }
-    return true;
-  }
+  bool parse_print_statement(base_ast_node *parent) {
 
-  bool parse_print_statement(base_ast_node *parent_node) {
+    // grab the first token
+    Token top_token = next_token();
+    top_stack.push(top_token);
 
-    base_ast_node *possible_child_node = new base_ast_node;
-    possible_child_node->node_type = AST_node_type::print;
-
-    Token token_next = next_token();
-    token_wait_area.push(token_next);
-
-    if (token_next.value != "print") {
+    // check if its 'print'
+    // if its not, go back to base setup (stack collapse)
+    std::cout << top_token.value;
+    if (top_token.value != "print") {
       stack_collapse();
       return false;
     }
 
-    token_next = next_token();
-    token_wait_area.push(token_next);
+    // get the next token
+    top_token = next_token();
 
-    if (token_next.value != "(") {
+    if (top_token.value != "(") {
       stack_collapse();
       return false;
     }
-
-    if (!parse_expression(possible_child_node)) {
-      return false;
-    }
-
-    token_next = next_token();
-    token_wait_area.push(token_next);
-
-    if (token_next.value != ")") {
-      stack_collapse();
-      return false;
-    }
-
-    // if we have succesfully parsed a print statement, then we link it with its
-    // parent
-    parent_node->children.emplace_back(possible_child_node);
-    possible_child_node->parent = parent_node;
-    clear_stack();
-    return true;
-  }
-
-  // important distinction to be made here
-  // parse_type_identifier does not parse for an identifier, it parses for the
-  // keyword that identifies some type
-  bool parse_type_identifier(base_ast_node *parent) {
-    type_identifier_node *possible_child_node = new type_identifier_node;
-    possible_child_node->node_type = AST_node_type::type_identifier;
-
-    Token token_next = next_token();
-    token_wait_area.push(token_next);
-
-    if (token_next.value != "int" && token_next.value != "string" &&
-        token_next.value != "float") {
-      return false;
-    } else {
-      if (token_next.value == "int") {
-        possible_child_node->type = variable_types::int_type;
-      }
-      if (token_next.value == "float") {
-        possible_child_node->type = variable_types::float_type;
-      }
-      if (token_next.value == "string") {
-        possible_child_node->type = variable_types::string_type;
-      }
-    }
-
-    possible_child_node->parent = parent;
-    parent->children.emplace_back(possible_child_node);
-    return true;
-  }
-
-  bool parse_identifier(base_ast_node *parent) {
-    identifier_node *potential_child = new identifier_node;
-    potential_child->node_type = AST_node_type::identifier_name;
-
-    Token token_next = next_token();
-    token_wait_area.push(token_next);
-
-    if (token_next.type != token_type::identifier) { // if not parse identifier
-      stack_collapse();
-      return false;
-    } else {
-      potential_child->value = token_next.value;
-    }
-
-    potential_child->parent = parent;
-    parent->children.emplace_back(potential_child);
-    return true;
-  }
-
-  bool parse_dec_ass(base_ast_node *parent) {
-    base_ast_node *possible_child_node = new base_ast_node;
-    possible_child_node->node_type = AST_node_type::declare_and_assign;
-
-    if (!parse_type_identifier(possible_child_node)) {
-      stack_collapse();
-      return false;
-    }
-
-    if (!parse_identifier(possible_child_node)) { // if not parse identifier
-      stack_collapse();
-      return false;
-    }
-
-    Token token_next = next_token();
-    token_wait_area.push(token_next);
-
-    if (token_next.value != "=") {
-      stack_collapse();
-      return false;
-    }
-
-    if (!parse_expression(possible_child_node)) { // if not parse literal
-      stack_collapse();
-      return false;
-    }
-
-    possible_child_node->parent = parent;
-    parent->children.emplace_back(possible_child_node);
-    clear_stack();
-    return true;
-  }
-
-  bool parse_expression(base_ast_node *parent) {
-
-    // expression = [int || string || float || ( + expression + )]
-
-    expression_node *potential_child = new expression_node;
-    potential_child->node_type = AST_node_type::expression;
-
-    Token token_next = next_token();
-    token_wait_area.push(token_next);
-
-    if (token_next.value == "(") {
-
-      if (!parse_expression(parent)) {
-        stack_collapse();
-        return false;
-      }
-
-      while (inline_tokens.top().value != ")") {
-        if (!parse_expression(parent)) {
-          stack_collapse();
-          return false; // recursive stop condition is this
-        }
-      }
-
-      if (inline_tokens.top().value != ")") {
-        stack_collapse();
-        return false;
-      }
-
-      inline_tokens.pop();
-
-      return true;
-    }
-
-    if (token_next.type == token_type::literal) {
-
-      potential_child->parent = parent;
-      potential_child->value = token_next.value;
-      parent->children.emplace_back(potential_child);
-
-      return true;
-    } else {
-      stack_collapse();
-      return false;
-    }
-
-    potential_child->parent = parent;
-    parent->children.emplace_back(potential_child);
 
     return true;
   }
-
-  bool parse_bin_op(base_ast_node *parent) {
-    binary_operator *potential_child = new binary_operator;
-
-    Token token_next = next_token();
-    inline_tokens.push(token_next);
-
-    if (token_next.value == "+") {
-      potential_child->operator_type = bin_operators::plus;
-      potential_child->parent = parent;
-      parent->children.emplace_back(potential_child);
-
-      inline_tokens.pop(); // get rid of the operator thats on the stack
-      return true;
-    } else if (token_next.value == "-") {
-      potential_child->operator_type = bin_operators::minus;
-      potential_child->parent = parent;
-      parent->children.emplace_back(potential_child);
-
-      inline_tokens.pop(); // get rid of the operator thats on the stack
-      return true;
-    } else if (token_next.value == "*") {
-      potential_child->operator_type = bin_operators::times;
-      potential_child->parent = parent;
-      parent->children.emplace_back(potential_child);
-
-      inline_tokens.pop(); // get rid of the operator thats on the stack
-      return true;
-    } else if (token_next.value == "/") {
-      potential_child->operator_type = bin_operators::divide;
-      potential_child->parent = parent;
-      parent->children.emplace_back(potential_child);
-
-      inline_tokens.pop(); // get rid of the operator thats on the stack
-      return true;
-    }
-
-    stack_collapse();
-    return false;
-  }
+  bool parse_var_dec_ass(base_ast_node *parent) { return true; }
 };
 
-// return number of tokens generated by lexer()
-int count_tokens(Token *tokens_list) {
-  int count = 0;
+void print_tree_from_node(base_ast_node *root, int depth) {
+  // get the indentation right
+  std::cout << std::string(0, ' ') << root->node_identifier << ": ";
+  std::cout << std::endl;
 
-  while (tokens_list[count].type != END) {
-    count++;
-  }
+  // print the children subtrees
+  if (!root->children.empty()) {
 
-  return count;
-}
-
-std::string give_node_type_string(base_ast_node *node) {
-
-  switch (node->node_type) {
-  case AST_node_type::program_node:
-    return "program_node";
-  case AST_node_type::print:
-    return "print_node";
-  case AST_node_type::identifier_name:
-    return "Identifier_node";
-  case AST_node_type::declare_and_assign:
-    return "variable_declaration_&_assignment_node";
-  case AST_node_type::expression:
-    return "expression_node";
-  case AST_node_type::type_identifier:
-    return "type_identifier_node";
-  }
-
-  return "node was not assigned type";
-}
-
-void print_tree_from_node(base_ast_node *node, int depth) {
-  std::cout << std::string(depth, '-') << give_node_type_string(node) << ": ";
-
-  if (const identifier_node *i_node = dynamic_cast<identifier_node *>(node)) {
-    std::cout << i_node->value;
-  }
-
-  if (const type_identifier_node *i_node =
-          dynamic_cast<type_identifier_node *>(node)) {
-    if (i_node->type == variable_types::int_type) {
-      std::cout << "int";
-    } else if (i_node->type == variable_types::float_type) {
-      std::cout << "float";
-    } else if (i_node->type == variable_types::string_type) {
-      std::cout << "string";
-    }
-  }
-  // lol
-  if (const expression_node *e_node = dynamic_cast<expression_node *>(node)) {
-    std::visit([](auto &&arg) { std::cout << arg << std::endl; },
-               e_node->value);
-  }
-
-  std::cout << "\n";
-
-  if (node->children.size() == 0) {
-    return;
-  } else {
-    for (int i = 0; i < node->children.size(); i++) {
-      print_tree_from_node(node->children[i], depth + 1);
+    for (int i = 0; i < root->children.size(); i++) {
+      print_tree_from_node(root->children[i], depth + 1);
     }
   }
 }
@@ -507,7 +173,6 @@ int main(int argc, char **argv) {
   base_ast_node root;
 
   Lang e(tokens);
-
   bool result = e.parse_program(&root);
 
   if (result) {

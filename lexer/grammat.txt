@@ -1,8 +1,6 @@
 program = <statement> + [statement + ...]
-statement =  [{ + statement + [statement] + } || <print_statement> || <variable_declare_assign>] + ";"
-expression = [int || string || float || ( + expression + ) || expression + bin_op + expression]
 
-bin_op = [+ || - || * || / || !]
+statement = [print statement || dec_assign_statement || '{' + statement + '}'] + ;
 
-print_statement = "print" + "(" + literal + ")"
-variable_declare_assign = int + identifier + "=" + literal 
+expression = binary_expression || 'id' 
+
