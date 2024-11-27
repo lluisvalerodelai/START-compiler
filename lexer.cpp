@@ -16,7 +16,7 @@ std::vector<Token> Lexer::lex(const std::string& raw_input) {
     
     // Do lexer stuff...
 
-    tokens.emplace_back(Token::Position(), token_type::quotes);
+    tokens.emplace_back(Token::Position(), token_type::quotes, "TEST_CONTENT");
     processed_string += string_to_process;
 
     return tokens;
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
   Lexer lex;
   auto tokens = lex.lex(example_string);
 
-  std::cout << tokens[0].type;
+  std::cout <<  "Type: " << tokens[0].type << "Content: " << tokens[0].content;
 
   return 0;
 }
