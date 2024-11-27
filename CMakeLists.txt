@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(include)
 
 # Set the custom g++ compiler (replace with your actual path)
-set(CMAKE_CXX_COMPILER g++)  
+set(CMAKE_CXX_COMPILER g++)
 
 # Add your source files
 file(GLOB SOURCE_FILES "src/*.cpp")
