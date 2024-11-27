@@ -1,4 +1,4 @@
 .vscode
 output.exe
 output
-build
+build/*
