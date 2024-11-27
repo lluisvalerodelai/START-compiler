@@ -1,6 +1,5 @@
 #include "lexer.hpp"
 #include <iostream>
-#include <memory>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -38,46 +37,52 @@ enum token_type {
   for_keyword,
 };
 
-class Token {
+class token {
 public:
-  struct Position {
-    int line_nr;
-    int local_character_number;
-    int global_character_number;
-  };
-
-  Position position;
+  const int line_nr;
   const token_type type;
 
-  Token(Position p, token_type t) : position(p), type(t) {}
+  token(int nr, token_type t) : line_nr(nr), type(t) {}
 
-  ~Token() = default;
+  ~token() = default;
 };
 
-class Lexer {
+class lexer {
 public:
   mutable std::string file_string;
-  mutable std::vector<Token *> token_list;
+  mutable std::vector<token *> token_list;
 
-  std::vector<std::unique_ptr<Token>> lex(std::string raw_input) {
+  std::vector<token *> lex(std::string raw_input) {
 
     file_string = raw_input;
-    std::vector<std::unique_ptr<Token>> tokens;
+    std::vector<token *> tokens;
 
     return tokens;
   }
 
-  ~Lexer() = default;
+  ~lexer() = default;
+
+private:
+  char pop_string(std::string str) {
+    if (str.length() == 0) {
+      throw std::invalid_argument("String passed is of length 0");
+    }
+
+    char first_char = str[0];
+    str.erase(0, 1);
+
+    return first_char;
+  }
 };
 
 int main(int argc, char **argv) {
 
   std::string example_string = "hello world";
 
-  Lexer lex;
+  lexer lex;
   lex.file_string = example_string;
 
-  std::vector<Token *> tokens = lex.lex(example_string);
+  std::vector<token *> tokens = lex.lex(example_string);
 
   std::cout << tokens[0]->type;
 
