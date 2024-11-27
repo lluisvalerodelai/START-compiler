@@ -6,20 +6,21 @@
  *  -separators: ( ) { } ; " "
  *  -operators: + - * / ! || &&
  *  -keywords: int, float, char, return, print, if, else, while, for
- *  -identifier specs: can contain '_' but no '-' also can not start with numbers
+ *  -identifier specs: can contain '_' but no '-' also can not start with
+ * numbers
  */
 
-std::vector<Token> Lexer::lex(const std::string& raw_input) {
+std::vector<Token> Lexer::lex(const std::string &raw_input) {
 
-    const std::string& string_to_process = raw_input;
-    std::vector<Token> tokens;
-    
-    // Do lexer stuff...
+  const std::string &string_to_process = raw_input;
+  std::vector<Token> tokens;
 
-    tokens.emplace_back(Token::Position(), token_type::quotes, "TEST_CONTENT");
-    processed_string += string_to_process;
+  // Do lexer stuff...
 
-    return tokens;
+  tokens.emplace_back(Token::Position(), token_type::quotes, "TEST_CONTENT");
+  processed_string += string_to_process;
+
+  return tokens;
 }
 
 int main(int argc, char **argv) {
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
   Lexer lex;
   auto tokens = lex.lex(example_string);
 
-  std::cout <<  "Type: " << tokens[0].type << "Content: " << tokens[0].content;
+  std::cout << "Type: " << tokens[0].type << "Content: " << tokens[0].content;
 
   return 0;
 }
