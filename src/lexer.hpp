@@ -70,7 +70,6 @@ public:
 
 class Lexer {
 private:
-  std::string processed_string;
   std::vector<Token> processed_tokens;
 
 public:
