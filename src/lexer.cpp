@@ -16,16 +16,20 @@ std::vector<Token> Lexer::lex(const std::string &raw_input) {
   std::vector<Token> tokens;
   int global_char = 0;
   int local_line_char = 0;
-  int line_nr;
+  int line_nr; //consider just having a position struct?
 
   /*
-   * while not at end token
-   *  if is_single_char
-   *    add token
-   *  if is numeric
-   *    add token
-   *  if is identifier
-   *    add token
+   * while not at end token (or string is not empty)
+   *  if is one of the single character tokens
+   *    add corresponding token
+   *    the only thing to be careful with is the '/' token, if the character after a '/' is either a '/' or '*' then its a comment, so handle it there
+   *  if is a number
+   *    add token (change the type of the token struct to also hold an int for if its an int or a float for if its a float, not just a string)
+   *  else
+   *  	its either an identifier, or keyword
+   *  	check with known keywords
+   *  	else add identifier
+   *	
    * */
 
   while (!raw_input.empty()) {
