@@ -9,8 +9,9 @@ using System.Diagnostics.CodeAnalysis;
 using OmniSharp.Extensions.LanguageServer.Protocol.General;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Server.handler;
 
-namespace Server;
+namespace Server.src;
 
 class Server
 {

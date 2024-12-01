@@ -9,9 +9,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
 using MediatR;
-using Server;
 
-namespace Server;
+namespace Server.handler;
 
 public class TextDocumentHandler : TextDocumentSyncHandlerBase
 {

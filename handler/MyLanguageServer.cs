@@ -4,7 +4,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 
-namespace Server;
+namespace Server.handler;
 
 /// <summary>
 /// Contains custom LSP functionality:
@@ -25,7 +25,7 @@ public static class MyLanguageServer
         Console.WriteLine("Server started");
         return Task.CompletedTask;
     }
-    
+
     public static Task ExitAsync(ExitParams exitParams, CancellationToken cancellationToken)
     {
         Console.WriteLine("Server stopped");
