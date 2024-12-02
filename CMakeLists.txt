@@ -11,13 +11,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Add include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-<<<<<<< HEAD
 # Set the custom g++ compiler (replace with your actual path)
 set(CMAKE_CXX_COMPILER g++)
-=======
 # Add source files
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
->>>>>>> c041442 (strcutre)
 
 # Create an executable target
 add_executable(MyProject ${SOURCES})

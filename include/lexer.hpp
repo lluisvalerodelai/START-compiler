@@ -1,79 +1,69 @@
+#include <cctype>
+#include <csignal>
 #include <iostream>
-#include <memory>
-#include <stdio.h>
+#include <regex>
+#include <stdexcept>
 #include <string>
-#include <variant>
+#include <unordered_set>
 #include <vector>
 
-/*
- *
- * Defined tokens:
- *  -separators: ( ) { } ; " "
- *  -operators: + - * / ! || &&
- *  -keywords: int, float, char, return, print, if, else, while, for
- *  -identifier specs: can contain '_' but no '-' also can not start with
- * numbers
- */
-
-enum token_type {
-  l_paren,
-  r_paren,
-  l_brace,
-  r_brace,
-  semicolon,
-  quotes,
-  add_op,
-  minus_op,
-  times_op,
-  divide_op,
-  or_op,
-  and_op,
-  int_keyword,
-  float_keyword,
-  char_keyword,
-  return_keyword,
-  print_keyword,
-  if_keyword,
-  else_keyword,
-  while_keyword,
-  for_keyword,
+enum class TokenType {
+  LeftParen,  // (
+  RightParen, // )
+  LeftBrace,  // {
+  RightBrace, // }
+  Semicolon,  // ;
+  And,        // &
+  Or,         // |
+  Plus,       // +
+  Minus,      // -
+  Multiply,   // *
+  Divide,     // /
+  Equals,     // =
+  String,
+  Keyword,           // Keywords: int, float, char, string, main, if, while
+  Identifier,        // User-defined names
+  Integer,           // Ints
+  Float,             // floats
+  SinglelineComment, //
+  MultiLineComment,  // $ this is a multi \n line comment $
+  Unknown,           // Unknown token
 };
 
-class Token {
-public:
-  struct Position {
-    const int line;
-    const int line_char;
-    const int glob_char;
+struct Token {
+  TokenType type;
+  std::string value;
+  int line;
+  int char_pos;
 
-    Position() : line(0), line_char(0), glob_char(0) {}
-    Position(int l, int lc, int gc) : line(l), line_char(lc), glob_char(gc) {}
-  };
-  struct Range {
-    const Position start;
-    const Position end;
-
-    Range() : start(), end() {}
-    Range(const Position &s, const Position &e) : start(s), end(e) {}
-  };
-
-  const std::variant<Position, Range> location;
-  const token_type type;
-  const std::string content;
-
-  Token(const std::variant<Position, Range> &l, token_type t,
-        const std::string &c)
-      : location(l), type(t), content(c) {}
-
-  ~Token() = default;
+  Token(TokenType t, const std::string &v, int l, int c)
+      : type(t), value(v), line(l), char_pos(c) {}
 };
 
 class Lexer {
 private:
-  std::vector<Token> processed_tokens;
+  std::unordered_set<std::string> keywords = {"int",    "float",  "char",
+                                              "string", "main",   "if",
+                                              "while",  "return", "print"};
+  std::unordered_set<char> separators = {'(', ')', '{', '}', ';', '&',
+                                         '|', '+', '-', '*', '/', '='};
+
+  bool isKeyword(const std::string &str) {
+    return keywords.find(str) != keywords.end();
+  }
+
+  bool isSeparator(char ch) { return separators.find(ch) != separators.end(); }
+
+  bool isIdentifierStart(char ch) { return std::isalpha(ch) || ch == '_'; }
+
+  bool isIdentifierChar(char ch) { return std::isalnum(ch) || ch == '_'; }
+
+  bool isNumberChar(char ch) { return std::isdigit(ch); }
+
+  bool isStringStart(char ch) { return ch == '"'; }
+
+  TokenType getSeparatorTokenType(char ch);
 
 public:
-  std::vector<Token> lex(const std::string &raw_input);
-
-  ~Lexer() = default;
+  std::vector<Token> tokenize(const std::string &input);
 };
