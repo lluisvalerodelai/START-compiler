@@ -1,3 +1,4 @@
+#pragma once
 #include <cctype>
 #include <csignal>
 #include <iostream>
@@ -6,6 +7,8 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+
+
 
 enum class TokenType {
   LeftParen,  // (
@@ -67,3 +70,5 @@ private:
 public:
   std::vector<Token> tokenize(const std::string &input);
 };
+
+void printTokens(const std::vector<Token> &tokens); 
