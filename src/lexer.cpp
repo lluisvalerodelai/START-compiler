@@ -185,10 +185,12 @@ std::vector<Token> Lexer::tokenize(const std::string &input) {
 }
 
 void printTokens(const std::vector<Token> &tokens) {
+  int i = 0;
   for (const auto &token : tokens) {
-    std::cout << "Token(Type: " << static_cast<int>(token.type) << ", Value: \""
+    std::cout << i << " Token(Type: " << static_cast<int>(token.type) << ", Value: \""
               << token.value << "\", Line: " << token.line
               << ", CharPos: " << token.char_pos << ")\n";
+    i++;
   }
 }
 

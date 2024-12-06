@@ -1,0 +1,18 @@
+DEFINITIONS: 
+    -anything surrounded in <> is a compound, made of smaller parts
+    -if something is surrounded by [] its optional
+    - | -> or
+    -if surrounded by "", the literal value of the token, else, the token_type
+
+program ::= <statement> + [<statement>...] 
+
+<statement> ::= <print_stm> | <dec_stm> + ";"
+
+<expression> ::= int | float | char
+
+<print_statement> ::= "print" + "(" + <expression> + ")" + ";"
+
+<dec_stm> = <create_var_stmnt> | <var_assign>
+<create_var_stmnt> ::= "int" | "float" | "char" + identifier + ["=" + <expression>]
+<var_assign> ::= identifier + "=" + expression
+

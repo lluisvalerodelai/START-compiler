@@ -8,8 +8,6 @@
 #include <unordered_set>
 #include <vector>
 
-
-
 enum class TokenType {
   LeftParen,  // (
   RightParen, // )
@@ -45,9 +43,8 @@ struct Token {
 
 class Lexer {
 private:
-  std::unordered_set<std::string> keywords = {"int",    "float",  "char",
-                                              "string", "main",   "if",
-                                              "while",  "return", "print"};
+  std::unordered_set<std::string> keywords = {
+      "int", "float", "string", "main", "if", "while", "return", "print"};
   std::unordered_set<char> separators = {'(', ')', '{', '}', ';', '&',
                                          '|', '+', '-', '*', '/', '='};
 
@@ -71,4 +68,4 @@ public:
   std::vector<Token> tokenize(const std::string &input);
 };
 
-void printTokens(const std::vector<Token> &tokens); 
+void printTokens(const std::vector<Token> &tokens);
