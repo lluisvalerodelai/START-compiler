@@ -1,12 +1,11 @@
 #pragma once
 #include <cctype>
 #include <csignal>
-#include <iostream>
-#include <regex>
-#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <stdexcept>
+#include <iostream>
 
 enum class TokenType {
   LeftParen,  // (
