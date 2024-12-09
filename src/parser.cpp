@@ -10,7 +10,6 @@ Token Parser::currentToken() {
   return {TokenType::Unknown, "", -1, -1};
 }
 
-
 // Utility to move to the next token
 void Parser::nextToken() {
   if (current < tokens.size())
@@ -138,6 +137,7 @@ ASTNode *Parser::program() {
 ASTNode *Parser::statements() {
   ASTNode *statements_node = new ASTNode("statements");
 
+  // keep parsing statements until we reach closing { of main()
   while (currentToken().type != TokenType::RightBrace) {
     ASTNode *child = statement();
     statements_node->children.emplace_back(child);
@@ -184,14 +184,21 @@ ASTNode *Parser::statement() {
 ASTNode *Parser::declaration() {
   // declaration node has children: identifier, expression
   ASTNode *declaration_node = new ASTNode("declaration");
+
+  // we know it will be either int, float, or string since its only called if
+  // these match
   match(TokenType::Keyword, "type of variable that is being declared");
+
   match(TokenType::Identifier, "identifier of varaible being declared");
+
   match(TokenType::Equals, "equal signs for variable being declared");
+
   // should actually be:
   // ASTNode *expression_node = expression();
   //->expression would then parse an expression
   ASTNode *expression_node = new ASTNode("expression_value");
   declaration_node->children.emplace_back(expression_node);
+
   match(TokenType::Semicolon, "variable declaration");
 
   return declaration_node;
@@ -199,22 +206,26 @@ ASTNode *Parser::declaration() {
 
 ASTNode *Parser::if_statement() {
   ASTNode *if_node = new ASTNode("if node");
+
   matchValue("if");
-  match(TokenType::LeftParen, "if statement");
-  match(TokenType::RightParen, "if statement");
-  match(TokenType::LeftBrace, "if statement");
-  match(TokenType::RightBrace, "if statement");
+  match(TokenType::LeftParen, "if statement");  //(
+  match(TokenType::RightParen, "if statement"); //)
+  match(TokenType::LeftBrace, "if statement");  //{
+  match(TokenType::RightBrace, "if statement"); //}
+
   if_node->children.emplace_back(new ASTNode("statement_blocl"));
   return if_node;
 };
 
 ASTNode *Parser::while_statement() {
   ASTNode *if_node = new ASTNode("while node");
+
   matchValue("while");
-  match(TokenType::LeftParen, "while statement");
-  match(TokenType::RightParen, "while statement");
-  match(TokenType::LeftBrace, "while statement");
-  match(TokenType::RightBrace, "while statement");
+  match(TokenType::LeftParen, "while statement");  //(
+  match(TokenType::RightParen, "while statement"); //)
+  match(TokenType::LeftBrace, "while statement");  //{
+  match(TokenType::RightBrace, "while statement"); //}
+
   if_node->children.emplace_back(new ASTNode("statement_blocl"));
   return if_node;
 };
@@ -222,19 +233,26 @@ ASTNode *Parser::while_statement() {
 ASTNode *Parser::assignment() {
   //<assignment>    ::= <identifier> "=" <expression> ";"
   ASTNode *assignemnt_node = new ASTNode("assignemnt node");
+
   match(TokenType::Identifier, "identifier of assignment statement");
+
   match(TokenType::Equals, "assignemnt statement");
+
   ASTNode *expression_node = new ASTNode("expression_value");
   assignemnt_node->children.emplace_back(expression_node);
+
   match(TokenType::Semicolon, "assignemnt statement");
 
   return assignemnt_node;
 }
 
 void printAST(ASTNode *node, int depth = 0) {
+
   if (!node)
     return;
+
   std::cout << std::string(depth * 2, ' ') << node->value << "\n";
+
   for (ASTNode *child : node->children) {
     printAST(child, depth + 1);
   }
@@ -291,10 +309,13 @@ int main() {
                                {TokenType::RightBrace, "}", 6, 1}};
 
   try {
+
     Parser parser(tokens);
     ASTNode *ast = parser.parse();
+
     printAST(ast);
     delete ast;
+
   } catch (const std::exception &e) {
     std::cerr << e.what() << "\n";
   }
