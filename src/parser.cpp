@@ -1,255 +1,235 @@
+#include "../include/parser.hpp"
 #include "../include/lexer.hpp"
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 
-// Abstract Syntax Tree Node
-struct ASTNode {
-  std::string value;
-  std::vector<ASTNode *> children;
+// Utility to get the current token
+Token Parser::currentToken() {
+  if (current < tokens.size())
+    return tokens[current];
+  return {TokenType::Unknown, "", -1, -1};
+}
 
-  ASTNode(const std::string &val) : value(val) {}
-  ~ASTNode() {
-    for (ASTNode *child : children) {
-      delete child;
+
+// Utility to move to the next token
+void Parser::nextToken() {
+  if (current < tokens.size())
+    ++current;
+}
+
+// Match a specific token type, otherwise throw an error
+void Parser::match(TokenType expected, std::string action) {
+  if (currentToken().type == expected) {
+    nextToken();
+  } else {
+
+    if (action == "") {
+      throw std::runtime_error(
+          "Syntax Error: Expected " + tokenTypeToString(expected) +
+          " but found token of type: " +
+          tokenTypeToStringLITERAL(currentToken().type) +
+          " with value: " + currentToken().value + " at line " +
+          std::to_string(currentToken().line) + ", position " +
+          std::to_string(currentToken().char_pos));
+    } else {
+      throw std::runtime_error(
+          "Syntax Error: Expected " + tokenTypeToString(expected) +
+          " but found token of type: " +
+          tokenTypeToStringLITERAL(currentToken().type) +
+          " with value: " + currentToken().value + " at line " +
+          std::to_string(currentToken().line) + ", position " +
+          std::to_string(currentToken().char_pos) + " while parsing for " +
+          action);
     }
   }
+}
+
+// Match a specific token type, otherwise throw an error
+void Parser::matchValue(std::string expected, std::string action) {
+  if (currentToken().value == expected) {
+    nextToken();
+  } else {
+
+    if (action == "") {
+      throw std::runtime_error(
+          "Syntax Error: Expected " + expected +
+          " but found token of value: " + currentToken().value + " at line " +
+          std::to_string(currentToken().line) + ", position " +
+          std::to_string(currentToken().char_pos));
+    } else {
+      throw std::runtime_error(
+          "Syntax Error: Expected " + expected +
+          " but found token of value: " + currentToken().value + " at line " +
+          std::to_string(currentToken().line) + ", position " +
+          std::to_string(currentToken().char_pos) + " while parsing for " +
+          action);
+    }
+  }
+}
+
+std::string Parser::tokenTypeToStringLITERAL(TokenType type) {
+  switch (type) {
+  case TokenType::LeftParen:
+    return "LeftParen";
+  case TokenType::RightParen:
+    return "RightParen";
+  case TokenType::LeftBrace:
+    return "LeftBrace";
+  case TokenType::RightBrace:
+    return "RightBrace";
+  case TokenType::Semicolon:
+    return "Semicolon";
+  case TokenType::Keyword:
+    return "Keyword";
+  case TokenType::Identifier:
+    return "Identifier";
+  case TokenType::Integer:
+    return "Integer";
+  case TokenType::Float:
+    return "Float";
+  case TokenType::String:
+    return "String";
+  default:
+    return "Unknown";
+  }
+}
+
+// Convert TokenType to string for error messages
+std::string Parser::tokenTypeToString(TokenType type) {
+  switch (type) {
+  case TokenType::LeftParen:
+    return "(";
+  case TokenType::RightParen:
+    return ")";
+  case TokenType::LeftBrace:
+    return "{";
+  case TokenType::RightBrace:
+    return "}";
+  case TokenType::Semicolon:
+    return ";";
+  case TokenType::Keyword:
+    return "Keyword";
+  case TokenType::Identifier:
+    return "Identifier";
+  case TokenType::Integer:
+    return "Integer";
+  case TokenType::Float:
+    return "Float";
+  case TokenType::String:
+    return "String";
+  default:
+    return "Unknown";
+  }
+}
+
+// Parsing functions for each non-terminal
+ASTNode *Parser::program() {
+  match(TokenType::Keyword);        // "int"
+  match(TokenType::Identifier);     // "main"
+  match(TokenType::LeftParen);      // "("
+  match(TokenType::RightParen);     // ")"
+  match(TokenType::LeftBrace);      // "{"
+  ASTNode *stmtList = statements(); // get the statements
+  match(TokenType::RightBrace);     // "}"
+  return stmtList;
+}
+
+// return a statements node
+ASTNode *Parser::statements() {
+  ASTNode *statements_node = new ASTNode("statements");
+
+  while (currentToken().type != TokenType::RightBrace) {
+    ASTNode *child = statement();
+    statements_node->children.emplace_back(child);
+  }
+
+  return statements_node;
+}
+
+// parse and return a statement node
+ASTNode *Parser::statement() {
+
+  // check if we are looking at a declaration
+  if (currentToken().type == TokenType::Keyword) {
+    if (currentToken().value == "int" || currentToken().value == "float" ||
+        currentToken().value == "string") {
+
+      ASTNode *statement_node = declaration();
+      return statement_node;
+    }
+  }
+
+  // check if we are looking at an assignment
+  if (currentToken().type == TokenType::Identifier) {
+    ASTNode *assignment_node = assignment();
+    return assignment_node;
+  }
+
+  // check if we are looking at an if
+  if (currentToken().value == "if") {
+    ASTNode *if_node = if_statement();
+    return if_node;
+  }
+
+  // check if we are looking at a while
+  if (currentToken().value == "while") {
+    ASTNode *while_node = while_statement();
+    return while_node;
+  }
+
+  // if none of those, then throw error
+  throw std::runtime_error("failed to parse statement???????");
+}
+
+ASTNode *Parser::declaration() {
+  // declaration node has children: identifier, expression
+  ASTNode *declaration_node = new ASTNode("declaration");
+  match(TokenType::Keyword, "type of variable that is being declared");
+  match(TokenType::Identifier, "identifier of varaible being declared");
+  match(TokenType::Equals, "equal signs for variable being declared");
+  // should actually be:
+  // ASTNode *expression_node = expression();
+  //->expression would then parse an expression
+  ASTNode *expression_node = new ASTNode("expression_value");
+  declaration_node->children.emplace_back(expression_node);
+  match(TokenType::Semicolon, "variable declaration");
+
+  return declaration_node;
+}
+
+ASTNode *Parser::if_statement() {
+  ASTNode *if_node = new ASTNode("if node");
+  matchValue("if");
+  match(TokenType::LeftParen, "if statement");
+  match(TokenType::RightParen, "if statement");
+  match(TokenType::LeftBrace, "if statement");
+  match(TokenType::RightBrace, "if statement");
+  if_node->children.emplace_back(new ASTNode("statement_blocl"));
+  return if_node;
 };
 
-class Parser {
-private:
-  std::vector<Token> tokens;
-  size_t current = 0;
-
-  // Utility to get the current token
-  Token currentToken() {
-    if (current < tokens.size())
-      return tokens[current];
-    return {TokenType::Unknown, "", -1, -1};
-  }
-
-  // Utility to move to the next token
-  void nextToken() {
-    if (current < tokens.size())
-      ++current;
-  }
-
-  // Match a specific token type, otherwise throw an error
-  void match(TokenType expected, std::string action = "") {
-    if (currentToken().type == expected) {
-      nextToken();
-    } else {
-
-      if (action == "") {
-        throw std::runtime_error(
-            "Syntax Error: Expected " + tokenTypeToString(expected) +
-            " but found token of type: " + tokenTypeToStringLITERAL(currentToken().type) +
-            " with value: " + currentToken().value + " at line " +
-            std::to_string(currentToken().line) + ", position " +
-            std::to_string(currentToken().char_pos));
-      } else {
-        throw std::runtime_error(
-            "Syntax Error: Expected " + tokenTypeToString(expected) +
-            " but found token of type: " + tokenTypeToStringLITERAL(currentToken().type) +
-            " with value: " + currentToken().value + " at line " +
-            std::to_string(currentToken().line) + ", position " +
-            std::to_string(currentToken().char_pos) + " while parsing for " +
-            action);
-      }
-    }
-  }
-
-  // Match a specific token type, otherwise throw an error
-  void matchValue(std::string expected, std::string action = "") {
-    if (currentToken().value == expected) {
-      nextToken();
-    } else {
-
-      if (action == "") {
-        throw std::runtime_error(
-            "Syntax Error: Expected " + expected +
-            " but found token of value: " + currentToken().value + " at line " +
-            std::to_string(currentToken().line) + ", position " +
-            std::to_string(currentToken().char_pos));
-      } else {
-        throw std::runtime_error(
-            "Syntax Error: Expected " + expected +
-            " but found token of value: " + currentToken().value + " at line " +
-            std::to_string(currentToken().line) + ", position " +
-            std::to_string(currentToken().char_pos) + " while parsing for " +
-            action);
-      }
-    }
-  }
-
-  std::string tokenTypeToStringLITERAL(TokenType type){
-    switch (type) {
-    case TokenType::LeftParen:
-      return "LeftParen";
-    case TokenType::RightParen:
-      return "RightParen";
-    case TokenType::LeftBrace:
-      return "LeftBrace";
-    case TokenType::RightBrace:
-      return "RightBrace";
-    case TokenType::Semicolon:
-      return "Semicolon";
-    case TokenType::Keyword:
-      return "Keyword";
-    case TokenType::Identifier:
-      return "Identifier";
-    case TokenType::Integer:
-      return "Integer";
-    case TokenType::Float:
-      return "Float";
-    case TokenType::String:
-      return "String";
-    default:
-      return "Unknown";
-    }
-  }
-
-  // Convert TokenType to string for error messages
-  std::string tokenTypeToString(TokenType type) {
-    switch (type) {
-    case TokenType::LeftParen:
-      return "(";
-    case TokenType::RightParen:
-      return ")";
-    case TokenType::LeftBrace:
-      return "{";
-    case TokenType::RightBrace:
-      return "}";
-    case TokenType::Semicolon:
-      return ";";
-    case TokenType::Keyword:
-      return "Keyword";
-    case TokenType::Identifier:
-      return "Identifier";
-    case TokenType::Integer:
-      return "Integer";
-    case TokenType::Float:
-      return "Float";
-    case TokenType::String:
-      return "String";
-    default:
-      return "Unknown";
-    }
-  }
-
-  // Parsing functions for each non-terminal
-  ASTNode *program() {
-    match(TokenType::Keyword);        // "int"
-    match(TokenType::Identifier);     // "main"
-    match(TokenType::LeftParen);      // "("
-    match(TokenType::RightParen);     // ")"
-    match(TokenType::LeftBrace);      // "{"
-    ASTNode *stmtList = statements(); // get the statements
-    match(TokenType::RightBrace);     // "}"
-    return stmtList;
-  }
-
-  // return a statements node
-  ASTNode *statements() {
-    ASTNode *statements_node = new ASTNode("statements");
-
-    while (currentToken().type != TokenType::RightBrace) {
-      ASTNode *child = statement();
-      statements_node->children.emplace_back(child);
-    }
-
-    return statements_node;
-  }
-
-  // parse and return a statement node
-  ASTNode *statement() {
-
-    // check if we are looking at a declaration
-    if (currentToken().type == TokenType::Keyword) {
-      if (currentToken().value == "int" || currentToken().value == "float" ||
-          currentToken().value == "string") {
-
-        ASTNode *statement_node = declaration();
-        return statement_node;
-      }
-    }
-
-    // check if we are looking at an assignment
-    if (currentToken().type == TokenType::Identifier) {
-      ASTNode *assignment_node = assignment();
-      return assignment_node;
-    }
-
-    // check if we are looking at an if
-    if (currentToken().value == "if") {
-      ASTNode *if_node = if_statement();
-      return if_node;
-    }
-
-    // check if we are looking at a while
-    if (currentToken().value == "while") {
-      ASTNode *while_node = while_statement();
-      return while_node;
-    }
-
-    // if none of those, then throw error
-    throw std::runtime_error("failed to parse statement???????");
-  }
-
-  ASTNode *declaration() {
-    // declaration node has children: identifier, expression
-    ASTNode *declaration_node = new ASTNode("declaration");
-    match(TokenType::Keyword, "type of variable that is being declared");
-    match(TokenType::Identifier, "identifier of varaible being declared");
-    match(TokenType::Equals, "equal signs for variable being declared");
-    // should actually be:
-    // ASTNode *expression_node = expression();
-    //->expression would then parse an expression
-    ASTNode *expression_node = new ASTNode("expression_value");
-    declaration_node->children.emplace_back(expression_node);
-    match(TokenType::Semicolon, "variable declaration");
-
-    return declaration_node;
-  }
-
-  ASTNode *if_statement() {
-    ASTNode *if_node = new ASTNode("if node");
-    matchValue("if");
-    match(TokenType::LeftParen, "if statement");
-    match(TokenType::RightParen, "if statement");
-    match(TokenType::LeftBrace, "if statement");
-    match(TokenType::RightBrace, "if statement");
-    if_node->children.emplace_back(new ASTNode("statement_blocl"));
-    return if_node;
-  };
-
-  ASTNode *while_statement() {
-    ASTNode *if_node = new ASTNode("while node");
-    matchValue("while");
-    match(TokenType::LeftParen, "while statement");
-    match(TokenType::RightParen, "while statement");
-    match(TokenType::LeftBrace, "while statement");
-    match(TokenType::RightBrace, "while statement");
-    if_node->children.emplace_back(new ASTNode("statement_blocl"));
-    return if_node;
-  };
-
-  ASTNode *assignment() {
-    //<assignment>    ::= <identifier> "=" <expression> ";"
-    ASTNode *assignemnt_node = new ASTNode("assignemnt node");
-    match(TokenType::Identifier, "identifier of assignment statement");
-    match(TokenType::Equals, "assignemnt statement");
-    ASTNode *expression_node = new ASTNode("expression_value");
-    assignemnt_node->children.emplace_back(expression_node);
-    match(TokenType::Semicolon, "assignemnt statement");
-
-    return assignemnt_node;
-  }
-
-public:
-  Parser(const std::vector<Token> &tokens) : tokens(tokens) {}
-
-  ASTNode *parse() { return program(); }
+ASTNode *Parser::while_statement() {
+  ASTNode *if_node = new ASTNode("while node");
+  matchValue("while");
+  match(TokenType::LeftParen, "while statement");
+  match(TokenType::RightParen, "while statement");
+  match(TokenType::LeftBrace, "while statement");
+  match(TokenType::RightBrace, "while statement");
+  if_node->children.emplace_back(new ASTNode("statement_blocl"));
+  return if_node;
 };
+
+ASTNode *Parser::assignment() {
+  //<assignment>    ::= <identifier> "=" <expression> ";"
+  ASTNode *assignemnt_node = new ASTNode("assignemnt node");
+  match(TokenType::Identifier, "identifier of assignment statement");
+  match(TokenType::Equals, "assignemnt statement");
+  ASTNode *expression_node = new ASTNode("expression_value");
+  assignemnt_node->children.emplace_back(expression_node);
+  match(TokenType::Semicolon, "assignemnt statement");
+
+  return assignemnt_node;
+}
 
 void printAST(ASTNode *node, int depth = 0) {
   if (!node)
