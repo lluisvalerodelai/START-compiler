@@ -21,6 +21,9 @@ private:
   // Utility to get the current token
   Token currentToken();
 
+  // Utility to peek the next token
+  Token peekToken();
+
   // Utility to move to the next token
   void nextToken();
 
@@ -44,13 +47,36 @@ private:
   // parse and return a statement node
   ASTNode *statement();
 
+  //parse and return a declaration node
   ASTNode *declaration();
 
+  //parse and return an if statement node
   ASTNode *if_statement();
 
+  //parse and return a while statement node
   ASTNode *while_statement();
 
+//parse and return an assignment node 
   ASTNode *assignment();
+
+  //parse and return an expression node 
+  ASTNode *expression();
+
+  //parse and return a term node 
+  ASTNode *parseTerm();
+
+  //parse and return a factor node 
+  ASTNode *parseFactor();
+
+  //parse and return a factor node 
+  ASTNode *parseNumeric();
+
+  //parse and return a factor node 
+  ASTNode *parseOR();
+  //parse and return a factor node 
+  ASTNode *parseAND();
+  //parse and return a factor node 
+  ASTNode *parseUnary();
 
 public:
   Parser(const std::vector<Token> &tokens) : tokens(tokens) {}

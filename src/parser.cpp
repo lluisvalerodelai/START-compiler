@@ -1,5 +1,6 @@
 #include "../include/parser.hpp"
 #include "../include/lexer.hpp"
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 
@@ -8,6 +9,14 @@ Token Parser::currentToken() {
   if (current < tokens.size())
     return tokens[current];
   return {TokenType::Unknown, "", -1, -1};
+}
+
+Token Parser::peekToken() {
+  if (current < tokens.size()) {
+    return tokens[current];
+  } else {
+    return tokens[current + 1];
+  }
 }
 
 // Utility to move to the next token
@@ -88,6 +97,13 @@ std::string Parser::tokenTypeToStringLITERAL(TokenType type) {
     return "Float";
   case TokenType::String:
     return "String";
+  case TokenType::Not:
+    return "Logical Not";
+  case TokenType::And:
+    return "Logical And";
+  case TokenType::Or:
+    return "Logical Or";
+
   default:
     return "Unknown";
   }
@@ -116,6 +132,12 @@ std::string Parser::tokenTypeToString(TokenType type) {
     return "Float";
   case TokenType::String:
     return "String";
+  case TokenType::Not:
+    return "!";
+  case TokenType::And:
+    return "&";
+  case TokenType::Or:
+    return "|";
   default:
     return "Unknown";
   }
@@ -123,13 +145,13 @@ std::string Parser::tokenTypeToString(TokenType type) {
 
 // Parsing functions for each non-terminal
 ASTNode *Parser::program() {
-  match(TokenType::Keyword);        // "int"
-  match(TokenType::Identifier);     // "main"
-  match(TokenType::LeftParen);      // "("
-  match(TokenType::RightParen);     // ")"
-  match(TokenType::LeftBrace);      // "{"
-  ASTNode *stmtList = statements(); // get the statements
-  match(TokenType::RightBrace);     // "}"
+  match(TokenType::Keyword);           // "int"
+  matchValue("main", "main function"); // main
+  match(TokenType::LeftParen);         // "("
+  match(TokenType::RightParen);        // ")"
+  match(TokenType::LeftBrace);         // "{"
+  ASTNode *stmtList = statements();    // get the statements
+  match(TokenType::RightBrace);        // "}"
   return stmtList;
 }
 
@@ -187,16 +209,16 @@ ASTNode *Parser::declaration() {
 
   // we know it will be either int, float, or string since its only called if
   // these match
-  match(TokenType::Keyword, "type of variable that is being declared");
+  match(TokenType::Keyword, "declaration");
 
-  match(TokenType::Identifier, "identifier of varaible being declared");
+  match(TokenType::Identifier, "declaration");
 
-  match(TokenType::Equals, "equal signs for variable being declared");
+  match(TokenType::Equals, "declaration");
 
   // should actually be:
   // ASTNode *expression_node = expression();
   //->expression would then parse an expression
-  ASTNode *expression_node = new ASTNode("expression_value");
+  ASTNode *expression_node = expression();
   declaration_node->children.emplace_back(expression_node);
 
   match(TokenType::Semicolon, "variable declaration");
@@ -211,23 +233,23 @@ ASTNode *Parser::if_statement() {
   match(TokenType::LeftParen, "if statement");  //(
   match(TokenType::RightParen, "if statement"); //)
   match(TokenType::LeftBrace, "if statement");  //{
+  if_node->children.emplace_back(statements());
   match(TokenType::RightBrace, "if statement"); //}
 
-  if_node->children.emplace_back(new ASTNode("statement_blocl"));
   return if_node;
 };
 
 ASTNode *Parser::while_statement() {
-  ASTNode *if_node = new ASTNode("while node");
+  ASTNode *while_node = new ASTNode("while node");
 
   matchValue("while");
   match(TokenType::LeftParen, "while statement");  //(
   match(TokenType::RightParen, "while statement"); //)
   match(TokenType::LeftBrace, "while statement");  //{
+  while_node->children.emplace_back(statements());
   match(TokenType::RightBrace, "while statement"); //}
 
-  if_node->children.emplace_back(new ASTNode("statement_blocl"));
-  return if_node;
+  return while_node;
 };
 
 ASTNode *Parser::assignment() {
@@ -238,12 +260,129 @@ ASTNode *Parser::assignment() {
 
   match(TokenType::Equals, "assignemnt statement");
 
-  ASTNode *expression_node = new ASTNode("expression_value");
+  ASTNode *expression_node = expression();
   assignemnt_node->children.emplace_back(expression_node);
 
   match(TokenType::Semicolon, "assignemnt statement");
 
   return assignemnt_node;
+}
+
+// Updated expression parsing with proper operator precedence
+ASTNode *Parser::expression() { return parseOR(); }
+
+ASTNode *Parser::parseOR() {
+  ASTNode *left = parseAND();
+
+  while (currentToken().type == TokenType::Or) { // Handle logical OR
+    Token op = currentToken();
+    nextToken();
+    ASTNode *right = parseAND();
+    ASTNode *node = new ASTNode(op.value);
+    node->children.emplace_back(left);
+    node->children.emplace_back(right);
+    left = node;
+  }
+
+  return left;
+}
+
+ASTNode *Parser::parseAND() {
+  ASTNode *left = parseUnary();
+
+  while (currentToken().type == TokenType::And) { // Handle logical AND
+    Token op = currentToken();
+    nextToken();
+    ASTNode *right = parseUnary();
+    ASTNode *node = new ASTNode(op.value);
+    node->children.emplace_back(left);
+    node->children.emplace_back(right);
+    left = node;
+  }
+
+  return left;
+}
+
+ASTNode *Parser::parseUnary() {
+  if (currentToken().type == TokenType::Not) { // Handle NOT
+    Token op = currentToken();
+    nextToken();
+    ASTNode *operand = parseUnary();
+    ASTNode *node = new ASTNode(op.value);
+    node->children.emplace_back(operand);
+    return node;
+  }
+
+  if (currentToken().type == TokenType::Minus) { // Handle negation
+    Token op = currentToken();
+    nextToken();
+    ASTNode *operand = parseUnary();
+    ASTNode *node = new ASTNode(op.value);
+    node->children.emplace_back(operand);
+    return node;
+  }
+
+  return parseTerm();
+}
+
+ASTNode *Parser::parseTerm() {
+  ASTNode *left = parseFactor(); // returned a 4
+
+  while (currentToken().type == TokenType::Plus ||
+         currentToken().type == TokenType::Minus) { // Handle +/- last
+    Token op = currentToken();
+    nextToken();
+    ASTNode *right = parseFactor();
+    ASTNode *node = new ASTNode(op.value);
+    node->children.emplace_back(left);
+    node->children.emplace_back(right);
+    left = node;
+  }
+
+  return left;
+}
+
+ASTNode *Parser::parseFactor() {
+
+  ASTNode *left = parseNumeric();
+
+  while (currentToken().type == TokenType::Multiply ||
+         currentToken().type == TokenType::Divide) {
+    Token op = currentToken();
+    nextToken();
+    ASTNode *right = parseNumeric();
+    ASTNode *node = new ASTNode(op.value);
+    node->children.emplace_back(left);
+    node->children.emplace_back(right);
+    left = node;
+  }
+
+  return left;
+}
+
+ASTNode *Parser::parseNumeric() {
+  if (currentToken().type ==
+      TokenType::LeftParen) { // Handle parenthetical expressions
+    nextToken();
+    ASTNode *expr = expression();
+    match(TokenType::RightParen);
+    return expr;
+  }
+
+  if (currentToken().type == TokenType::Integer ||
+      currentToken().type == TokenType::Float) {
+    ASTNode *node = new ASTNode(currentToken().value);
+    nextToken();
+    return node;
+  }
+
+  if (currentToken().type == TokenType::Identifier) {
+    ASTNode *node = new ASTNode(currentToken().value);
+    nextToken();
+    return node;
+  }
+
+  throw std::runtime_error("Syntax Error: Invalid factor.");
 }
 
 void printAST(ASTNode *node, int depth = 0) {
@@ -259,55 +398,27 @@ void printAST(ASTNode *node, int depth = 0) {
 }
 
 int main() {
+  std::string raw_input = R"(int main() {
+
+  int a = 3 + (4 + (5*6));
+  float pi = 3;
+
+  if () {
+
+  b = 25 * 13;
+    }
+  while () {
+
+  int b = 0 | (1 & 0);
+    }
+
+
+ })";
+
+  Lexer lexer;
   // Replace this with tokens from your lexer
-  std::vector<Token> tokens = {{TokenType::Keyword, "int", 1, 1},
-                               {TokenType::Identifier, "main", 1, 5},
-                               {TokenType::LeftParen, "(", 1, 9},
-                               {TokenType::RightParen, ")", 1, 10},
-                               {TokenType::LeftBrace, "{", 1, 12},
-
-                               {TokenType::Keyword, "int", 2, 2},
-                               {TokenType::Identifier, "x", 2, 6},
-                               {TokenType::Equals, "=", 2, 8},
-                               {TokenType::Semicolon, ";", 2, 11},
-                               /* {TokenType::Integer, "5", 2, 10}, */
-
-                               {TokenType::Identifier, "z", 5, 6},
-                               {TokenType::Equals, "=", 5, 8},
-                               {TokenType::Semicolon, ";", 5, 11},
-                               /* {TokenType::Integer, "5", 2, 10}, */
-
-                               {TokenType::Keyword, "float", 3, 2},
-                               {TokenType::Identifier, "y", 3, 6},
-                               {TokenType::Equals, "=", 3, 8},
-                               {TokenType::Semicolon, ";", 3, 11},
-                               /* {TokenType::Integer, "5", 2, 10}, */
-
-                               {TokenType::Keyword, "if", 1, 2},
-                               {TokenType::LeftParen, "(", 1, 2},
-                               {TokenType::RightParen, ")", 1, 2},
-                               {TokenType::LeftBrace, "{", 5, 2},
-                               {TokenType::RightBrace, "}", 5, 2},
-
-                               {TokenType::Keyword, "string", 4, 2},
-                               {TokenType::Identifier, "z", 4, 6},
-                               {TokenType::Equals, "=", 4, 8},
-                               {TokenType::Semicolon, ";", 4, 11},
-                               /* {TokenType::Integer, "5", 2, 10}, */
-
-                               {TokenType::Keyword, "while", 4, 8},
-                               {TokenType::LeftParen, "(", 4, 11},
-                               {TokenType::RightParen, ")", 4, 11},
-                               {TokenType::LeftBrace, "{", 4, 11},
-                               {TokenType::RightBrace, "}", 4, 11},
-
-                               {TokenType::Identifier, "z", 5, 6},
-                               {TokenType::Equals, "=", 5, 8},
-                               {TokenType::Semicolon, ";", 5, 11},
-                               /* {TokenType::Integer, "5", 2, 10}, */
-
-                               {TokenType::RightBrace, "}", 6, 1}};
-
+  std::vector<Token> tokens = lexer.tokenize(raw_input);
+  printTokens(tokens);
   try {
 
     Parser parser(tokens);
