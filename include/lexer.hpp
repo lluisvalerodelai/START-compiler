@@ -20,6 +20,7 @@ enum class TokenType {
   Multiply,   // *
   Divide,     // /
   Equals,     // =
+  Not,        // !
   String,
   Keyword,           // Keywords: int, float, char, string, main, if, while
   Identifier,        // User-defined names
@@ -45,7 +46,7 @@ private:
   std::unordered_set<std::string> keywords = {
       "int", "float", "string", "main", "if", "while", "return", "print"};
   std::unordered_set<char> separators = {'(', ')', '{', '}', ';', '&',
-                                         '|', '+', '-', '*', '/', '='};
+                                         '|', '!', '+', '-', '*', '/', '='};
 
   bool isKeyword(const std::string &str) {
     return keywords.find(str) != keywords.end();
