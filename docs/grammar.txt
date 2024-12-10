@@ -1,11 +1,13 @@
+NOTE: just words like identifier, float, int when not surrounded by quotes are also treated as terminals, but they refer to the specific token type
+
 <program>       ::= "int" "main" "(" ")" "{" <statements> "}"
 
-<statements>    ::= <statement> <statements> | ε
+<statements>    ::= <statement> {<statement>}
 
-<statement>     ::= <declaration>     | 
-                    <assignment>      | 
-                    <if-statement>    | 
-                    <while-statement>
+<statement>     ::= <declaration>
+                    | <assignment>
+                    | <if-statement>
+                    | <while-statement>
 
 <declaration>   ::= <type> <identifier> "=" <expression> ";"
 
@@ -15,22 +17,21 @@
 
 <while-statement>::= "while" "(" <expression> ")" "{" <statements> "}"
 
-<expression>    ::= <term>            | 
-                    <term> "+" <term> | 
-                    <term> "-" <term>
 
----> doing it this way automatically gives order of ops
-<term>          ::= <factor> |
-                    <factor> "*" <factor> | 
-                    <factor> "/" <factor>
+ -------------------expressions-------------------
+ Precedence of operators:
+  -logical or
+  -logical and
+  -logical not
+  -multiplication or division 
+  -addition or subtraction
 
-<factor>        ::= <identifier> | 
-                    <number> | 
-                    <string> | 
-                    "(" <expression> ")"
-
-<type>          ::= "int" | "float" | "char" | "string"
-
-
-pseudocode for parsing expression
+<expression>          ::= <or_expression>
+<or_expression>       ::= <and_expression> { "|" <and_expression> } 
+<and_expression>      ::= <unary_expression> {"&" <unary_expression>} NOTE: unary expression here represents a unary operator on a standard expression, which includes the empty operator (do nothing)
+<unary_expression>    ::= ["!"] <primary_expression>
+<primary_expression>  ::= <factor> {"+" <factor> | "-" <factor>}
+<factor>              ::= <term> { "*" <term> | "/" <term> }
+<term>                ::= <numeric> | identifier | "(" <expression> ")"
+<numeric>              ::= float | int
 
