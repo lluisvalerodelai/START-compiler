@@ -103,6 +103,10 @@ std::string Parser::tokenTypeToStringLITERAL(TokenType type) {
     return "Logical And";
   case TokenType::Or:
     return "Logical Or";
+  case TokenType::LessThan:
+    return "Less Than comparison";
+  case TokenType::GreaterThan:
+    return "greater Than comparison";
 
   default:
     return "Unknown";
@@ -143,8 +147,19 @@ std::string Parser::tokenTypeToString(TokenType type) {
   }
 }
 
+void Parser::prepareTokens() {
+
+  for (int i = 0; i < tokens.size(); i++) {
+    if (tokens[i].type == TokenType::SinglelineComment ||
+        tokens[i].type == TokenType::MultiLineComment) {
+      tokens.erase(tokens.begin() + i);
+    }
+  }
+}
+
 // Parsing functions for each non-terminal
 ASTNode *Parser::program() {
+  prepareTokens();
   match(TokenType::Keyword);           // "int"
   matchValue("main", "main function"); // main
   match(TokenType::LeftParen);         // "("
@@ -211,6 +226,7 @@ ASTNode *Parser::declaration() {
   // these match
   match(TokenType::Keyword, "declaration");
 
+  declaration_node->children.emplace_back(new ASTNode(currentToken().value));
   match(TokenType::Identifier, "declaration");
 
   match(TokenType::Equals, "declaration");
@@ -231,6 +247,10 @@ ASTNode *Parser::if_statement() {
 
   matchValue("if");
   match(TokenType::LeftParen, "if statement");  //(
+
+  ASTNode *evaluated_expression = expression();
+  if_node->children.emplace_back(evaluated_expression);
+
   match(TokenType::RightParen, "if statement"); //)
   match(TokenType::LeftBrace, "if statement");  //{
   if_node->children.emplace_back(statements());
@@ -244,6 +264,9 @@ ASTNode *Parser::while_statement() {
 
   matchValue("while");
   match(TokenType::LeftParen, "while statement");  //(
+  
+  while_node->children.emplace_back(expression());
+
   match(TokenType::RightParen, "while statement"); //)
   match(TokenType::LeftBrace, "while statement");  //{
   while_node->children.emplace_back(statements());
@@ -307,26 +330,38 @@ ASTNode *Parser::parseUnary() {
   if (currentToken().type == TokenType::Not) { // Handle NOT
     Token op = currentToken();
     nextToken();
-    ASTNode *operand = parseUnary();
+    ASTNode *operand = parseUnary(); // parseUnary and not parseTerm so that we
+                                     // can have multiple negations in a row
     ASTNode *node = new ASTNode(op.value);
     node->children.emplace_back(operand);
     return node;
   }
 
-  if (currentToken().type == TokenType::Minus) { // Handle negation
+  return parseComparison(); // if nothing is being negated
+}
+
+ASTNode *Parser::parseComparison() {
+
+  ASTNode *left = parseTerm();
+
+  // if current token is one of the recognized comparisons
+  if (comparison_tokens.find(currentToken().value) != comparison_tokens.end() ||
+      currentToken().value == "<" || currentToken().value == ">") {
     Token op = currentToken();
     nextToken();
-    ASTNode *operand = parseUnary();
+    ASTNode *right = parseFactor();
     ASTNode *node = new ASTNode(op.value);
-    node->children.emplace_back(operand);
-    return node;
+    node->children.emplace_back(left);
+    node->children.emplace_back(right);
+
+    left = node;
   }
 
-  return parseTerm();
+  return left;
 }
 
 ASTNode *Parser::parseTerm() {
-  ASTNode *left = parseFactor(); // returned a 4
+  ASTNode *left = parseFactor();
 
   while (currentToken().type == TokenType::Plus ||
          currentToken().type == TokenType::Minus) { // Handle +/- last
@@ -401,16 +436,22 @@ int main() {
   std::string raw_input = R"(int main() {
 
   int a = 3 + (4 + (5*6));
-  float pi = 3;
+  float pi1 = 3.41;
+  float pi_2 = (pi1 <= 4) & !(10 != 10) & (13 == 13) & (14 >= 13) | ((3 < 4) | (4 < (10 + 5)));
+  float w_w__w_ = 3;
+  float __w__w___w = $here is a cheeky 
 
-  if () {
+    multi-line comment! $ 3;
 
-  b = 25 * 13;
-    }
-  while () {
+  if ( (3 <= 3) & (4 >= 4) | !(10 != 10)) {
+  b = 25 + 13;
+    } //here is a single line comment int 4 = 5;
+  
+  int i = 0;
 
-  int b = 0 | (1 & 0);
-    }
+  while (i <= 10) {
+    i = i + 1;
+  }
 
 
  })";

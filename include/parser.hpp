@@ -1,11 +1,14 @@
 #pragma once
 #include "../include/lexer.hpp"
+#include <string>
 
-struct ASTNode {
+class ASTNode {
+public:
   std::string value;
   std::vector<ASTNode *> children;
 
   ASTNode(const std::string &val) : value(val) {}
+
   ~ASTNode() {
     for (ASTNode *child : children) {
       delete child;
@@ -13,10 +16,15 @@ struct ASTNode {
   }
 };
 
+
 class Parser {
 private:
   std::vector<Token> tokens;
   size_t current = 0;
+  std::unordered_set<std::string> comparison_tokens = {"==", "<=", ">=", "!="};
+
+  //utility to clean the tokens (removing unwanted comment tokens)
+  void prepareTokens(); 
 
   // Utility to get the current token
   Token currentToken();
@@ -47,36 +55,41 @@ private:
   // parse and return a statement node
   ASTNode *statement();
 
-  //parse and return a declaration node
+  // parse and return a declaration node
   ASTNode *declaration();
 
-  //parse and return an if statement node
+  // parse and return an if statement node
   ASTNode *if_statement();
 
-  //parse and return a while statement node
+  // parse and return a while statement node
   ASTNode *while_statement();
 
-//parse and return an assignment node 
+  // parse and return an assignment node
   ASTNode *assignment();
 
-  //parse and return an expression node 
+  // parse and return an expression node
   ASTNode *expression();
 
-  //parse and return a term node 
+  // parse and return a term node
   ASTNode *parseTerm();
 
-  //parse and return a factor node 
+  // parse and return a factor node
   ASTNode *parseFactor();
 
-  //parse and return a factor node 
+  // parse and return a numeric node
   ASTNode *parseNumeric();
 
-  //parse and return a factor node 
+  // parse and return a boolean or node
   ASTNode *parseOR();
-  //parse and return a factor node 
+
+  // parse and return a boolean and node
   ASTNode *parseAND();
-  //parse and return a factor node 
+
+  // parse and return a unary node
   ASTNode *parseUnary();
+
+  // parse and return a comaprison node
+  ASTNode *parseComparison();
 
 public:
   Parser(const std::vector<Token> &tokens) : tokens(tokens) {}
