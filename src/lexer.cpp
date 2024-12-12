@@ -1,4 +1,5 @@
 #include "../include/lexer.hpp"
+#include <string>
 
 TokenType Lexer::getSeparatorTokenType(char ch) {
   switch (ch) {
@@ -26,9 +27,35 @@ TokenType Lexer::getSeparatorTokenType(char ch) {
     return TokenType::Divide;
   case '=':
     return TokenType::Equals;
+  case '<':
+    return TokenType::LessThan;
+  case '>':
+    return TokenType::GreaterThan;
+  case '!':
+    return TokenType::Not;
   default:
     return TokenType::Unknown;
   }
+}
+
+TokenType Lexer::getComparisonTokenType(std::string s) {
+  if (s == "==") {
+    return TokenType::EqualComparison;
+  }
+
+  if (s == "!=") {
+    return TokenType::NotEqual;
+  }
+
+  if (s == "<=") {
+    return TokenType::LessThanEqual;
+  }
+
+  if (s == ">=") {
+    return TokenType::GreaterThanEqual;
+  }
+
+  return TokenType::Unknown;
 }
 
 std::vector<Token> Lexer::tokenize(const std::string &input) {
@@ -103,8 +130,19 @@ std::vector<Token> Lexer::tokenize(const std::string &input) {
     }
 
     if (isSeparator(ch)) {
-      tokens.emplace_back(getSeparatorTokenType(ch), std::string(1, ch), line,
-                          char_pos++);
+
+      if (isComparison(std::string(1, ch) + input[i + 1])) {
+        tokens.emplace_back(
+            getComparisonTokenType(std::string(1, ch) + input[i + 1]),
+            std::string(1, ch) + input[i + 1], line, char_pos++);
+        i++; // skip the second comparison character
+      } else {
+
+        char_pos++;
+        tokens.emplace_back(getSeparatorTokenType(ch), std::string(1, ch), line,
+                            char_pos++);
+      }
+
       continue;
     }
 
@@ -187,8 +225,8 @@ std::vector<Token> Lexer::tokenize(const std::string &input) {
 void printTokens(const std::vector<Token> &tokens) {
   int i = 0;
   for (const auto &token : tokens) {
-    std::cout << i << " Token(Type: " << static_cast<int>(token.type) << ", Value: \""
-              << token.value << "\", Line: " << token.line
+    std::cout << i << " Token(Type: " << static_cast<int>(token.type)
+              << ", Value: \"" << token.value << "\", Line: " << token.line
               << ", CharPos: " << token.char_pos << ")\n";
     i++;
   }
