@@ -1,0 +1,185 @@
+This is the specification for the ordering of the children nodes for each AST node type
+
+
+All AST nodes are the same object. Every AST node has an identifier called 'value' which indicates the type of node it is.
+Depending on which kind of node it is, its children will be in a specific order
+
+------------------------------------------------------------------------------------------------------
+                                      ORDERING OF CHILDREN
+------------------------------------------------------------------------------------------------------
+
+Root Node:
+  The children of the root node appear from left to right where the leftmost child (first in its children vector) is the highest 
+  statement in the program
+
+Statements Node:
+  A statements node represents one or more statements, for example each if statement or while statement will have one of their
+  children be a statements node for whatever is in their main body
+  The children of a statements node are in the same order as the Root Node
+
+Declaration Node:
+- a variable declaration
+  will have 2 children, the first child is the identifier name of the variable being declared, and the second child
+  is the actual expression value of the variable
+
+If Statement Node:
+  children order
+    -evaluated expression
+    -statements block 
+
+While statement
+  children order
+    -evaluated expression
+    -statements block
+
+Assignment node
+Assigning a value to a variable
+  children order
+    -value to be assigned
+
+Expression Node
+  -it has children which are themselves expression nodes
+examples:
+(pi1 <= 4) & !(10 != 10) & (13 == 13) & (14 >= 13) | ((3 < 4) | (4 < (10 + 5))) produces:
+
+|
+  &
+    &
+      &
+        <=
+          pi1
+          4
+        !
+          !=
+            10
+            10
+      ==
+        13
+        13
+    >=
+      14
+      13
+  |
+    <
+      3
+      4
+    <
+      4
+      +
+        10
+        5 
+
+3 + (4 + (5*6)) produces:
+
++
+  3
+  +
+    4
+    *
+      5
+      6
+
+
+------------------------------------------------------------------------------------------------------
+                                     EXAMPLE AST GENERATED 
+------------------------------------------------------------------------------------------------------
+-------------------
+int main() {
+
+  int a = 3 + (4 + (5*6));
+  float pi1 = 3.41;
+  float pi_2 = (pi1 <= 4) & !(10 != 10) & (13 == 13) & (14 >= 13) | ((3 < 4) | (4 < (10 + 5)));
+  float w_w__w_ = 3;
+  float __w__w___w = $here is a cheeky 
+
+    multi-line comment! $ 3;
+
+  if ( (3 <= 3) & (4 >= 4) | !(10 != 10)) {
+  b = 25 + 13;
+    } //here is a single line comment int 4 = 5;
+  
+  int i = 0;
+
+  while (i <= 10) {
+    i = i + 1;
+  }
+ }
+
+ ---------------produces:
+statements
+  declaration
+    a
+    +
+      3
+      +
+        4
+        *
+          5
+          6
+  declaration
+    pi1
+    3.41
+  declaration
+    pi_2
+    |
+      &
+        &
+          &
+            <=
+              pi1
+              4
+            !
+              !=
+                10
+                10
+          ==
+            13
+            13
+        >=
+          14
+          13
+      |
+        <
+          3
+          4
+        <
+          4
+          +
+            10
+            5
+  declaration
+    w_w__w_
+    3
+  declaration
+    __w__w___w
+    3
+  if node
+    |
+      &
+        <=
+          3
+          3
+        >=
+          4
+          4
+      !
+        !=
+          10
+          10
+    statements
+      assignemnt node
+        +
+          25
+          13
+  declaration
+    i
+    0
+  while node
+    <=
+      i
+      10
+    statements
+      assignemnt node
+        +
+          i
+          1
