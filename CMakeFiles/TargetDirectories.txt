@@ -1,3 +1,0 @@
-/home/lluis/Coding/START-compiler/CMakeFiles/MyProject.dir
-/home/lluis/Coding/START-compiler/CMakeFiles/edit_cache.dir
-/home/lluis/Coding/START-compiler/CMakeFiles/rebuild_cache.dir
