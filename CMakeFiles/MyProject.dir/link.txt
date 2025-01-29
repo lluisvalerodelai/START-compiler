@@ -1,1 +1,0 @@
-g++ CMakeFiles/MyProject.dir/src/lexer.cpp.o CMakeFiles/MyProject.dir/src/parser.cpp.o -o MyProject
