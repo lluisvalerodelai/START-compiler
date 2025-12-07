@@ -279,6 +279,7 @@ ASTNode *Parser::assignment() {
   //<assignment>    ::= <identifier> "=" <expression> ";"
   ASTNode *assignemnt_node = new ASTNode("assignemnt node");
 
+  assignemnt_node->children.emplace_back(new ASTNode(currentToken().value));
   match(TokenType::Identifier, "identifier of assignment statement");
 
   match(TokenType::Equals, "assignemnt statement");
@@ -420,57 +421,3 @@ ASTNode *Parser::parseNumeric() {
   throw std::runtime_error("Syntax Error: Invalid factor.");
 }
 
-void printAST(ASTNode *node, int depth = 0) {
-
-  if (!node)
-    return;
-
-  std::cout << std::string(depth * 2, ' ') << node->value << "\n";
-
-  for (ASTNode *child : node->children) {
-    printAST(child, depth + 1);
-  }
-}
-
-int main() {
-  std::string raw_input = R"(int main() {
-
-  int a = 3 + (4 + (5*6));
-  float pi1 = 3.41;
-  float pi_2 = (pi1 <= 4) & !(10 != 10) & (13 == 13) & (14 >= 13) | ((3 < 4) | (4 < (10 + 5)));
-  float w_w__w_ = 3;
-  float __w__w___w = $here is a cheeky 
-
-    multi-line comment! $ 3;
-
-  if ( (3 <= 3) & (4 >= 4) | !(10 != 10)) {
-  b = 25 + 13;
-    } //here is a single line comment int 4 = 5;
-  
-  int i = 0;
-
-  while (i <= 10) {
-    i = i + 1;
-  }
-
-
- })";
-
-  Lexer lexer;
-  // Replace this with tokens from your lexer
-  std::vector<Token> tokens = lexer.tokenize(raw_input);
-  printTokens(tokens);
-  try {
-
-    Parser parser(tokens);
-    ASTNode *ast = parser.parse();
-
-    printAST(ast);
-    delete ast;
-
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << "\n";
-  }
-
-  return 0;
-}

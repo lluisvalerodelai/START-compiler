@@ -3,3 +3,7 @@ output.exe
 output
 build
 MyProject
+start-compiler
+example
+obj/
+*.o
